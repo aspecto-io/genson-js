@@ -10,7 +10,7 @@ describe('SchemaBuilder', () => {
         });
 
         it('should build schema for number', async () => {
-            const schema = createSchemaFor(1.0);
+            const schema = createSchemaFor(1.1);
             expect(schema).toEqual({ type: 'number' });
         });
 
@@ -43,12 +43,22 @@ describe('SchemaBuilder', () => {
     describe('arrays', () => {
         it('it should generate schema for arrays of the same type', async () => {
             const schema = createSchemaFor([1, 2, 3]);
+            expect(schema).toEqual({ type: 'array', items: { type: 'integer' } });
+        });
+
+        it('it should generate schema for arrays of the same type with floats', async () => {
+            const schema = createSchemaFor([1, 2.1, 3]);
             expect(schema).toEqual({ type: 'array', items: { type: 'number' } });
         });
 
         it('it should generate schema for arrays of different primitive types', async () => {
-            const schema = createSchemaFor([1, 'string', null, false, true]);
+            const schema = createSchemaFor([1, 1.1, 'string', null, false, true]);
             expect(schema).toEqual({ type: 'array', items: { type: ['null', 'boolean', 'number', 'string'] } });
+        });
+
+        it('it should generate schema for arrays of different primitive types and ints only', async () => {
+            const schema = createSchemaFor([1, 'string', null, false, true]);
+            expect(schema).toEqual({ type: 'array', items: { type: ['null', 'boolean', 'integer', 'string'] } });
         });
     });
 
@@ -57,7 +67,7 @@ describe('SchemaBuilder', () => {
             const schema = createSchemaFor({ one: 1, two: 2 });
             expect(schema).toEqual({
                 type: 'object',
-                properties: { one: { type: 'number' }, two: { type: 'number' } },
+                properties: { one: { type: 'integer' }, two: { type: 'integer' } },
                 required: ['one', 'two'],
             });
         });
@@ -66,7 +76,7 @@ describe('SchemaBuilder', () => {
             const schema = createSchemaFor({ one: 1, two: 'second' });
             expect(schema).toEqual({
                 type: 'object',
-                properties: { one: { type: 'number' }, two: { type: 'string' } },
+                properties: { one: { type: 'integer' }, two: { type: 'string' } },
                 required: ['one', 'two'],
             });
         });
@@ -74,13 +84,13 @@ describe('SchemaBuilder', () => {
 
     describe('nested array', () => {
         it('should generate schema for nested arrays', async () => {
-            const schema = createSchemaFor([1, [2], [[3]]]);
+            const schema = createSchemaFor([1, [2.1], [[3]]]);
             expect(schema).toEqual({
                 type: 'array',
                 items: {
                     anyOf: [
                         {
-                            type: 'number',
+                            type: 'integer',
                         },
                         {
                             type: 'array',
@@ -92,7 +102,7 @@ describe('SchemaBuilder', () => {
                                     {
                                         type: 'array',
                                         items: {
-                                            type: 'number',
+                                            type: 'integer',
                                         },
                                     },
                                 ],
@@ -104,20 +114,20 @@ describe('SchemaBuilder', () => {
         });
 
         it('should generate schema for nested arrays and simplify anyOf', async () => {
-            const schema = createSchemaFor([1, 'some string', null, [2, 'some other string', {}], [[3]]]);
+            const schema = createSchemaFor([1, 'some string', null, [2, 'some other string', {}], [[3.1]]]);
             expect(schema).toEqual({
                 type: 'array',
                 items: {
                     anyOf: [
                         {
-                            type: ['null', 'number', 'string'],
+                            type: ['null', 'integer', 'string'],
                         },
                         {
                             type: 'array',
                             items: {
                                 anyOf: [
                                     {
-                                        type: ['number', 'string', 'object'],
+                                        type: ['integer', 'string', 'object'],
                                     },
                                     {
                                         type: 'array',
@@ -139,13 +149,13 @@ describe('SchemaBuilder', () => {
             const schema = createSchemaFor({
                 one: 1,
                 two: 'second',
-                three: { four: 5, five: [5], six: null, seven: [{}, { eight: 1 }, { nine: 'nine' }] },
+                three: { four: 5, five: [5], six: null, seven: [{}, { eight: 1.1 }, { nine: 'nine' }] },
             });
             expect(schema).toEqual({
                 type: 'object',
                 properties: {
                     one: {
-                        type: 'number',
+                        type: 'integer',
                     },
                     two: {
                         type: 'string',
@@ -154,12 +164,12 @@ describe('SchemaBuilder', () => {
                         type: 'object',
                         properties: {
                             four: {
-                                type: 'number',
+                                type: 'integer',
                             },
                             five: {
                                 type: 'array',
                                 items: {
-                                    type: 'number',
+                                    type: 'integer',
                                 },
                             },
                             six: {
@@ -199,11 +209,12 @@ describe('SchemaBuilder', () => {
                         lvl2PropNum1: 5,
                         lvl2PropArr1: [5],
                         six: null,
-                        lvl2PropArr2: [{}, { lvl3PropNum1: 1 }, { lvl3PropStr1: 'nine' }],
+                        lvl2PropArr2: [{}, { lvl3PropNum1: 1.2 }, { lvl3PropStr1: 'nine' }],
                     },
                 },
                 { lvl1PropStr: 'one' },
-                { lvl1PropStr: 'one', lvl1PropObj1: { lvl2PropArr: [null, 'some string', false] } },
+                { lvl1PropNum: 1.2, lvl1PropStr: 'one' },
+                { lvl1PropStr: 'one', lvl1PropObj1: { lvl2PropArr: [2.3, null, 'some string', false] } },
             ]);
             expect(schema).toEqual({
                 type: 'array',
@@ -232,12 +243,12 @@ describe('SchemaBuilder', () => {
                             type: 'object',
                             properties: {
                                 lvl2PropNum1: {
-                                    type: 'number',
+                                    type: 'integer',
                                 },
                                 lvl2PropArr1: {
                                     type: 'array',
                                     items: {
-                                        type: 'number',
+                                        type: 'integer',
                                     },
                                 },
                                 six: {

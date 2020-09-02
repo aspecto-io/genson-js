@@ -92,6 +92,11 @@ function combineSchemas(schemas: Schema[]): Schema {
         [ValueType.Object]: combineObjectSchemas(schemasByType[ValueType.Object]),
     };
 
+    if (resultSchemasByType[ValueType.Number]) {
+        // if at least one value is float, others can be floats too
+        delete resultSchemasByType[ValueType.Integer];
+    }
+
     const schemasFound = Object.values(resultSchemasByType).filter(Boolean);
     const multiType = schemasFound.length > 1;
     if (multiType) {
@@ -190,20 +195,11 @@ function unwrapSchemas(schemas: Schema[]): Schema[] {
     return unwrappedSchemas;
 }
 
-function isContainerSchema(schema: Schema): boolean {
-    const type = (schema as Schema).type;
-    return type === ValueType.Array || type === ValueType.Object;
-}
-
-function isWrappedAnyOfSchema(schema: Schema): boolean {
-    return Array.isArray((schema as Schema).type);
-}
-
 function wrapAnyOfSchema(schema: Schema): Schema {
     const simpleSchemas = [];
     const complexSchemas = [];
     for (const subSchema of schema.anyOf) {
-        if (isWrappedAnyOfSchema(subSchema)) {
+        if (Array.isArray(subSchema.type)) {
             simpleSchemas.push(...subSchema.type);
         } else if (isSimpleSchema(subSchema)) {
             simpleSchemas.push((subSchema as Schema).type);
@@ -227,76 +223,10 @@ function isSimpleSchema(schema: Schema): boolean {
     return keys.length === 1 && keys[0] === 'type';
 }
 
-function isSchema(schema: Schema): schema is Schema {
-    return typeof (schema as Schema).type === 'string';
+function isContainerSchema(schema: Schema): boolean {
+    const type = (schema as Schema).type;
+    return type === ValueType.Array || type === ValueType.Object;
 }
-
-function simplifySchemas(schemas: Schema[]) {
-    return {
-        type: unique([schemas.map((s) => s.type)]),
-    };
-}
-
-function unsimplifySchema(schema: Schema): Schema {
-    if (isWrappedAnyOfSchema(schema))
-        return { anyOf: (schema.type as ValueType[]).map((s) => ({ type: s })) } as Schema;
-    return schema;
-}
-
-function unique(array: any[]) {
-    const set = new Set(array);
-    const uniqueValues = [...set.values()];
-    return uniqueValues;
-}
-
-// function mergeComplexSchemas(schema1: Schema, schema2: Schema): Schema {
-//     if (schema1.type === ValueType.Array && schema2.type === ValueType.Array)
-//         return mergeArraySchemas(schema1, schema2);
-//     if (schema1.type === ValueType.Object && schema2.type === ValueType.Object)
-//         return mergeObjectSchemas(schema1, schema2);
-//     throw new Error(`Can't merge complex schemas of different types ${schema1.type} and ${schema2.type}`);
-// }
-
-// function mergeObjectSchemas(s1: ObjectSchema, s2: ObjectSchema): ObjectSchema {
-//     const props1 = Object.entries(s1.properties);
-//     const props2 = Object.entries(s2.properties);
-//     // if ()
-// }
-
-// function mergeArraySchemas(s1: ArraySchema, s2: ArraySchema): ArraySchema {
-//     const itemSchemaTypes: Record<ValueType, boolean | Schema> = {
-//         [ValueType.Array]: false,
-//         [ValueType.Object]: false,
-//         [ValueType.Boolean]: false,
-//         [ValueType.Number]: false,
-//         [ValueType.String]: false,
-//         [ValueType.Null]: false,
-//     };
-// }
-// function getUniqueSchemas(schemas: Schema[]) {
-//     const uniqueSchemas = [];
-//     schemas.forEach((schema) => {
-//         if (!uniqueSchemas.some((s) => areEqual(s, schema))) {
-//             uniqueSchemas.push(schema);
-//         }
-//     });
-//     return uniqueSchemas;
-// }
-
-// function areEqual(s1: Schema, s2: Schema): boolean {
-//     if (s1.type != s2.type) return false;
-//     if (s1.type == NodeType.Array && s2.type == NodeType.Array) {
-//         if (typeof s1.items !== typeof s2.items) return false;
-//         if (Array.isArray(s1.items) && Array.isArray(s2.items)) {
-//             if (s1.items?.length !== s2.items?.length) return false;
-//             return;
-//         }
-//     }
-// }
-
-// function mergeSchemas(schemas: Schema[]): Schema {}
-// function extendSchema(object: any): Schema {}
-// function isSuperset(schema: Schema, schema: Schema): boolean {}
 
 // facede
 export function generateSchema(value: any): Schema {
