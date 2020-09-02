@@ -1,56 +1,27 @@
 enum ValueType {
     Null = 'null',
     Boolean = 'boolean',
+    Integer = 'integer',
     Number = 'number',
     String = 'string',
     Object = 'object',
     Array = 'array',
 }
 
-type Schema = SingleTypeSchema | AnyOfSchema;
-type SingleTypeSchema = PrimitiveSchema | ContainerSchema;
-type PrimitiveSchema = NullSchema | BooleanSchema | NumberSchema | StringSchema;
-type ContainerSchema = ArraySchema | ObjectSchema;
-type AnyOfSchema = RegularAnyOfSchema | SimplifiedAnyOfSchema;
-
-type NullSchema = {
-    type: ValueType.Null;
-};
-
-type BooleanSchema = {
-    type: ValueType.Boolean;
-};
-
-type NumberSchema = {
-    type: ValueType.Number;
-};
-
-type StringSchema = {
-    type: ValueType.String;
-};
-
-type ArraySchema = {
-    type: ValueType.Array;
+type Schema = {
+    type?: ValueType | ValueType[];
     items?: Schema;
-};
-
-type ObjectSchema = {
-    type: ValueType.Object;
     properties?: Record<string, Schema>;
     required?: string[];
+    anyOf?: Array<Schema>;
 };
 
-type SimplifiedAnyOfSchema = {
-    type: ValueType[];
-};
-
-type RegularAnyOfSchema = {
-    anyOf: Schema[];
-};
-
-export function createSchemaFor(value: any): SingleTypeSchema {
+export function createSchemaFor(value: any): Schema {
     switch (typeof value) {
         case 'number':
+            if (Number.isInteger(value)) {
+                return { type: ValueType.Integer };
+            }
             return { type: ValueType.Number };
         case 'boolean':
             return { type: ValueType.Boolean };
@@ -67,7 +38,7 @@ export function createSchemaFor(value: any): SingleTypeSchema {
     }
 }
 
-function createSchemaForArray(arr: Array<any>): SingleTypeSchema {
+function createSchemaForArray(arr: Array<any>): Schema {
     if (arr.length === 0) {
         return { type: ValueType.Array };
     }
@@ -76,7 +47,7 @@ function createSchemaForArray(arr: Array<any>): SingleTypeSchema {
     return { type: ValueType.Array, items };
 }
 
-function createSchemaForObject(obj: Object): SingleTypeSchema {
+function createSchemaForObject(obj: Object): Schema {
     const keys = Object.keys(obj);
     if (keys.length === 0) {
         return {
@@ -91,37 +62,23 @@ function createSchemaForObject(obj: Object): SingleTypeSchema {
 }
 
 function combineSchemas(schemas: Schema[]): Schema {
-    const schemasByType: Record<ValueType, SingleTypeSchema[]> = {
+    const schemasByType: Record<ValueType, Schema[]> = {
         [ValueType.Null]: [],
         [ValueType.Boolean]: [],
+        [ValueType.Integer]: [],
         [ValueType.Number]: [],
         [ValueType.String]: [],
         [ValueType.Array]: [],
         [ValueType.Object]: [],
     };
 
-    for (const schema of schemas) {
-        const unwrappedSchemas = [];
-        if (isSimplifiedAnyOfSchema(schema)) {
-            unwrappedSchemas.push(...schema.type.map((type) => ({ type })));
-        } else if (isRegularAnyOfSchema(schema)) {
-            for (const itemSchema of schema.anyOf) {
-                if (isSimplifiedAnyOfSchema(schema)) {
-                    unwrappedSchemas.push(...schema.type.map((type) => ({ type })));
-                } else {
-                    unwrappedSchemas.push(itemSchema as SingleTypeSchema);
-                }
-            }
+    const unwrappedSchemas = unwrapSchemas(schemas);
+    for (const unwrappedSchema of unwrappedSchemas) {
+        const type = unwrappedSchema.type as ValueType;
+        if (schemasByType[type].length === 0 || isContainerSchema(unwrappedSchema)) {
+            schemasByType[type].push(unwrappedSchema);
         } else {
-            unwrappedSchemas.push(schema);
-        }
-        for (const unwrappedSchema of unwrappedSchemas) {
-            const { type } = unwrappedSchema;
-            if (schemasByType[type].length === 0 || isContainerSchema(schema)) {
-                schemasByType[type].push(schema);
-            } else {
-                continue;
-            }
+            continue;
         }
     }
 
@@ -129,42 +86,32 @@ function combineSchemas(schemas: Schema[]): Schema {
         [ValueType.Null]: schemasByType[ValueType.Null][0],
         [ValueType.Boolean]: schemasByType[ValueType.Boolean][0],
         [ValueType.Number]: schemasByType[ValueType.Number][0],
+        [ValueType.Integer]: schemasByType[ValueType.Integer][0],
         [ValueType.String]: schemasByType[ValueType.String][0],
-        [ValueType.Array]: combineArraySchemas(schemasByType[ValueType.Array] as ArraySchema[]),
-        [ValueType.Object]: combineObjectSchemas(schemasByType[ValueType.Object] as ObjectSchema[]),
+        [ValueType.Array]: combineArraySchemas(schemasByType[ValueType.Array]),
+        [ValueType.Object]: combineObjectSchemas(schemasByType[ValueType.Object]),
     };
 
     const schemasFound = Object.values(resultSchemasByType).filter(Boolean);
     const multiType = schemasFound.length > 1;
     if (multiType) {
-        const simplified = simplifyAnyOfSchema({ anyOf: schemasFound });
-        return simplified;
+        const wrapped = wrapAnyOfSchema({ anyOf: schemasFound });
+        return wrapped;
     }
     return schemasFound[0] as Schema;
 }
 
-function combineArraySchemas(schemas: ArraySchema[]): ArraySchema {
+function combineArraySchemas(schemas: Schema[]): Schema {
     if (!schemas || schemas.length === 0) {
         return undefined;
     }
-    const itemSchemas: SingleTypeSchema[] = [];
+    const itemSchemas: Schema[] = [];
     for (const schema of schemas) {
-        // todo: think on this case
         if (!schema.items) continue;
-        if (isSimplifiedAnyOfSchema(schema.items)) {
-            itemSchemas.push(...schema.items.type.map((type) => ({ type })));
-        } else if (isRegularAnyOfSchema(schema.items)) {
-            for (const itemSchema of schema.items.anyOf) {
-                if (isSimplifiedAnyOfSchema(schema)) {
-                    itemSchemas.push(...schema.type.map((type) => ({ type })));
-                } else {
-                    itemSchemas.push(itemSchema as SingleTypeSchema);
-                }
-            }
-        } else {
-            itemSchemas.push(schema.items);
-        }
+        const unwrappedSchemas = unwrapSchema(schema.items);
+        itemSchemas.push(...unwrappedSchemas);
     }
+
     if (itemSchemas.length === 0) {
         return {
             type: ValueType.Array,
@@ -177,31 +124,21 @@ function combineArraySchemas(schemas: ArraySchema[]): ArraySchema {
     };
 }
 
-function combineObjectSchemas(schemas: ObjectSchema[]): ObjectSchema {
+function combineObjectSchemas(schemas: Schema[]): Schema {
     if (!schemas || schemas.length === 0) {
         return undefined;
     }
     const propCounter: Record<string, number> = {};
     const allPropSchemas = schemas.map((s) => s.properties).filter(Boolean);
-    const schemasByProp: Record<string, SingleTypeSchema[]> = {};
+    const schemasByProp: Record<string, Schema[]> = {};
     for (const propSchemas of allPropSchemas) {
         for (const [prop, schema] of Object.entries(propSchemas)) {
             if (!schemasByProp[prop]) {
                 schemasByProp[prop] = [];
             }
-            if (isSimplifiedAnyOfSchema(schema)) {
-                schemasByProp[prop].push(...schema.type.map((type) => ({ type })));
-            } else if (isRegularAnyOfSchema(schema)) {
-                for (const itemSchema of schema.anyOf) {
-                    if (isSimplifiedAnyOfSchema(schema)) {
-                        schemasByProp[prop].push(...schema.type.map((type) => ({ type })));
-                    } else {
-                        schemasByProp[prop].push(itemSchema as SingleTypeSchema);
-                    }
-                }
-            } else {
-                schemasByProp[prop].push(schema);
-            }
+            const unwrappedSchema = unwrapSchema(schema);
+            schemasByProp[prop].push(...unwrappedSchema);
+
             if (!propCounter[prop]) {
                 propCounter[prop] = 1;
             } else {
@@ -219,11 +156,12 @@ function combineObjectSchemas(schemas: ObjectSchema[]): ObjectSchema {
         return props;
     }, {});
 
+    const schemasCount = schemas.length;
     const required = Object.entries(propCounter)
-        .filter(([, val]) => val === schemas.length)
+        .filter(([, val]) => val === schemasCount)
         .map(([key]) => key);
 
-    const combinedSchema: ObjectSchema = { type: ValueType.Object };
+    const combinedSchema: Schema = { type: ValueType.Object };
 
     if (Object.keys(properties).length > 0) {
         combinedSchema.properties = properties;
@@ -235,43 +173,40 @@ function combineObjectSchemas(schemas: ObjectSchema[]): ObjectSchema {
     return combinedSchema;
 }
 
-function isContainerSchema(schema: Schema): schema is ContainerSchema {
-    const type = (schema as SingleTypeSchema).type;
+function unwrapSchema(schema: Schema): Schema[] {
+    if (!schema) return [];
+    if (schema.anyOf) {
+        return unwrapSchemas(schema.anyOf);
+    }
+    if (Array.isArray(schema.type)) {
+        return schema.type.map((x) => ({ type: x }));
+    }
+    return [schema];
+}
+
+function unwrapSchemas(schemas: Schema[]): Schema[] {
+    if (!schemas || schemas.length === 0) return [];
+    const unwrappedSchemas = schemas.flatMap((schema) => unwrapSchema(schema));
+    return unwrappedSchemas;
+}
+
+function isContainerSchema(schema: Schema): boolean {
+    const type = (schema as Schema).type;
     return type === ValueType.Array || type === ValueType.Object;
 }
 
-function isSimplifiedAnyOfSchema(schema: Schema): schema is SimplifiedAnyOfSchema {
-    return Array.isArray((schema as SingleTypeSchema).type);
+function isWrappedAnyOfSchema(schema: Schema): boolean {
+    return Array.isArray((schema as Schema).type);
 }
 
-function isRegularAnyOfSchema(schema: Schema): schema is RegularAnyOfSchema {
-    return typeof (schema as RegularAnyOfSchema).anyOf !== 'undefined';
-}
-
-function isAnyOfSchema(schema: Schema): schema is AnyOfSchema {
-    return isRegularAnyOfSchema(schema) || isSimplifiedAnyOfSchema(schema);
-}
-
-function generateSchema(value: any): Schema {
-    return createSchemaFor(value);
-}
-
-function simplifiedAnyOfToRegular(schema: SimplifiedAnyOfSchema): RegularAnyOfSchema {
-    return {
-        anyOf: schema.type.map((valueType) => ({
-            type: valueType,
-        })),
-    };
-}
-
-function simplifyAnyOfSchema(schema: RegularAnyOfSchema): AnyOfSchema {
+function wrapAnyOfSchema(schema: Schema): Schema {
     const simpleSchemas = [];
     const complexSchemas = [];
     for (const subSchema of schema.anyOf) {
-        if (isSimplifiedAnyOfSchema(subSchema)) {
+        if (isWrappedAnyOfSchema(subSchema)) {
             simpleSchemas.push(...subSchema.type);
         } else if (isSimpleSchema(subSchema)) {
-            simpleSchemas.push((subSchema as SingleTypeSchema).type);
+            simpleSchemas.push((subSchema as Schema).type);
         } else {
             complexSchemas.push(subSchema);
         }
@@ -292,19 +227,19 @@ function isSimpleSchema(schema: Schema): boolean {
     return keys.length === 1 && keys[0] === 'type';
 }
 
-function isSingleTypeSchema(schema: Schema): schema is SingleTypeSchema {
-    return typeof (schema as SingleTypeSchema).type === 'string';
+function isSchema(schema: Schema): schema is Schema {
+    return typeof (schema as Schema).type === 'string';
 }
 
-function simplifySchemas(schemas: SingleTypeSchema[]) {
+function simplifySchemas(schemas: Schema[]) {
     return {
         type: unique([schemas.map((s) => s.type)]),
     };
 }
 
 function unsimplifySchema(schema: Schema): Schema {
-    if (isSimplifiedAnyOfSchema(schema))
-        return { anyOf: (schema as SimplifiedAnyOfSchema).type.map((s) => ({ type: s })) } as Schema;
+    if (isWrappedAnyOfSchema(schema))
+        return { anyOf: (schema.type as ValueType[]).map((s) => ({ type: s })) } as Schema;
     return schema;
 }
 
@@ -362,3 +297,8 @@ function unique(array: any[]) {
 // function mergeSchemas(schemas: Schema[]): Schema {}
 // function extendSchema(object: any): Schema {}
 // function isSuperset(schema: Schema, schema: Schema): boolean {}
+
+// facede
+export function generateSchema(value: any): Schema {
+    return createSchemaFor(value);
+}

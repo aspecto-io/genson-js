@@ -4,8 +4,13 @@ function pp(any) {
 }
 describe('SchemaBuilder', () => {
     describe('simple types', () => {
-        it('should build schema for number', async () => {
+        it('should build schema for integer', async () => {
             const schema = createSchemaFor(1);
+            expect(schema).toEqual({ type: 'integer' });
+        });
+
+        it('should build schema for number', async () => {
+            const schema = createSchemaFor(1.0);
             expect(schema).toEqual({ type: 'number' });
         });
 
