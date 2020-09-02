@@ -90,7 +90,7 @@ function createSchemaForObject(obj: Object): SingleTypeSchema {
     return { type: ValueType.Object, properties, required: keys };
 }
 
-function combineSchemas(schemas: SingleTypeSchema[]): Schema {
+function combineSchemas(schemas: Schema[]): Schema {
     const schemasByType: Record<ValueType, SingleTypeSchema[]> = {
         [ValueType.Null]: [],
         [ValueType.Boolean]: [],
@@ -101,11 +101,27 @@ function combineSchemas(schemas: SingleTypeSchema[]): Schema {
     };
 
     for (const schema of schemas) {
-        const { type } = schema;
-        if (schemasByType[type].length === 0 || isContainerSchema(schema)) {
-            schemasByType[type].push(schema);
+        const unwrappedSchemas = [];
+        if (isSimplifiedAnyOfSchema(schema)) {
+            unwrappedSchemas.push(...schema.type.map((type) => ({ type })));
+        } else if (isRegularAnyOfSchema(schema)) {
+            for (const itemSchema of schema.anyOf) {
+                if (isSimplifiedAnyOfSchema(schema)) {
+                    unwrappedSchemas.push(...schema.type.map((type) => ({ type })));
+                } else {
+                    unwrappedSchemas.push(itemSchema as SingleTypeSchema);
+                }
+            }
         } else {
-            continue;
+            unwrappedSchemas.push(schema);
+        }
+        for (const unwrappedSchema of unwrappedSchemas) {
+            const { type } = unwrappedSchema;
+            if (schemasByType[type].length === 0 || isContainerSchema(schema)) {
+                schemasByType[type].push(schema);
+            } else {
+                continue;
+            }
         }
     }
 
@@ -121,7 +137,8 @@ function combineSchemas(schemas: SingleTypeSchema[]): Schema {
     const schemasFound = Object.values(resultSchemasByType).filter(Boolean);
     const multiType = schemasFound.length > 1;
     if (multiType) {
-        return simplifyAnyOfSchema({ anyOf: schemasFound });
+        const simplified = simplifyAnyOfSchema({ anyOf: schemasFound });
+        return simplified;
     }
     return schemasFound[0] as Schema;
 }
@@ -206,7 +223,11 @@ function combineObjectSchemas(schemas: ObjectSchema[]): ObjectSchema {
         .filter(([, val]) => val === schemas.length)
         .map(([key]) => key);
 
-    const combinedSchema: ObjectSchema = { type: ValueType.Object, properties };
+    const combinedSchema: ObjectSchema = { type: ValueType.Object };
+
+    if (Object.keys(properties).length > 0) {
+        combinedSchema.properties = properties;
+    }
     if (required.length > 0) {
         combinedSchema.required = required;
     }
@@ -260,9 +281,9 @@ function simplifyAnyOfSchema(schema: RegularAnyOfSchema): AnyOfSchema {
     }
     const anyOf = [];
     if (simpleSchemas.length > 0) {
-        anyOf.push({ type: simpleSchemas });
+        anyOf.push({ type: simpleSchemas.length > 1 ? simpleSchemas : simpleSchemas[0] });
     }
-    anyOf.push(complexSchemas);
+    anyOf.push(...complexSchemas);
     return { anyOf };
 }
 

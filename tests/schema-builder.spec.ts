@@ -1,6 +1,7 @@
 import { createSchemaFor } from '../src';
-import { time } from 'console';
-
+function pp(any) {
+    console.log(JSON.stringify(any, null, 2));
+}
 describe('SchemaBuilder', () => {
     describe('simple types', () => {
         it('should build schema for number', async () => {
@@ -62,6 +63,201 @@ describe('SchemaBuilder', () => {
                 type: 'object',
                 properties: { one: { type: 'number' }, two: { type: 'string' } },
                 required: ['one', 'two'],
+            });
+        });
+    });
+
+    describe('nested array', () => {
+        it('should generate schema for nested arrays', async () => {
+            const schema = createSchemaFor([1, [2], [[3]]]);
+            expect(schema).toEqual({
+                type: 'array',
+                items: {
+                    anyOf: [
+                        {
+                            type: 'number',
+                        },
+                        {
+                            type: 'array',
+                            items: {
+                                anyOf: [
+                                    {
+                                        type: 'number',
+                                    },
+                                    {
+                                        type: 'array',
+                                        items: {
+                                            type: 'number',
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    ],
+                },
+            });
+        });
+
+        it('should generate schema for nested arrays and simplify anyOf', async () => {
+            const schema = createSchemaFor([1, 'some string', null, [2, 'some other string', {}], [[3]]]);
+            expect(schema).toEqual({
+                type: 'array',
+                items: {
+                    anyOf: [
+                        {
+                            type: ['null', 'number', 'string'],
+                        },
+                        {
+                            type: 'array',
+                            items: {
+                                anyOf: [
+                                    {
+                                        type: ['number', 'string', 'object'],
+                                    },
+                                    {
+                                        type: 'array',
+                                        items: {
+                                            type: 'number',
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    ],
+                },
+            });
+        });
+    });
+
+    describe('nested objects/arrays', () => {
+        it('should combine object schemas and respect required property', async () => {
+            const schema = createSchemaFor({
+                one: 1,
+                two: 'second',
+                three: { four: 5, five: [5], six: null, seven: [{}, { eight: 1 }, { nine: 'nine' }] },
+            });
+            expect(schema).toEqual({
+                type: 'object',
+                properties: {
+                    one: {
+                        type: 'number',
+                    },
+                    two: {
+                        type: 'string',
+                    },
+                    three: {
+                        type: 'object',
+                        properties: {
+                            four: {
+                                type: 'number',
+                            },
+                            five: {
+                                type: 'array',
+                                items: {
+                                    type: 'number',
+                                },
+                            },
+                            six: {
+                                type: 'null',
+                            },
+                            seven: {
+                                type: 'array',
+                                items: {
+                                    type: 'object',
+                                    properties: {
+                                        eight: {
+                                            type: 'number',
+                                        },
+                                        nine: {
+                                            type: 'string',
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        required: ['four', 'five', 'six', 'seven'],
+                    },
+                },
+                required: ['one', 'two', 'three'],
+            });
+        });
+    });
+
+    describe('all cases combined', () => {
+        it('should generate valid schemas for complex objects', async () => {
+            const schema = createSchemaFor([
+                {
+                    lvl1PropNum: 1,
+                    lvl1PropStr: 'second',
+                    lvl1PropObj1: { lvl2PropArr: [1, 2] },
+                    lvl1PropObj2: {
+                        lvl2PropNum1: 5,
+                        lvl2PropArr1: [5],
+                        six: null,
+                        lvl2PropArr2: [{}, { lvl3PropNum1: 1 }, { lvl3PropStr1: 'nine' }],
+                    },
+                },
+                { lvl1PropStr: 'one' },
+                { lvl1PropStr: 'one', lvl1PropObj1: { lvl2PropArr: [null, 'some string', false] } },
+            ]);
+            expect(schema).toEqual({
+                type: 'array',
+                items: {
+                    type: 'object',
+                    properties: {
+                        lvl1PropNum: {
+                            type: 'number',
+                        },
+                        lvl1PropStr: {
+                            type: 'string',
+                        },
+                        lvl1PropObj1: {
+                            type: 'object',
+                            properties: {
+                                lvl2PropArr: {
+                                    type: 'array',
+                                    items: {
+                                        type: ['null', 'boolean', 'number', 'string'],
+                                    },
+                                },
+                            },
+                            required: ['lvl2PropArr'],
+                        },
+                        lvl1PropObj2: {
+                            type: 'object',
+                            properties: {
+                                lvl2PropNum1: {
+                                    type: 'number',
+                                },
+                                lvl2PropArr1: {
+                                    type: 'array',
+                                    items: {
+                                        type: 'number',
+                                    },
+                                },
+                                six: {
+                                    type: 'null',
+                                },
+                                lvl2PropArr2: {
+                                    type: 'array',
+                                    items: {
+                                        type: 'object',
+                                        properties: {
+                                            lvl3PropNum1: {
+                                                type: 'number',
+                                            },
+                                            lvl3PropStr1: {
+                                                type: 'string',
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                            required: ['lvl2PropNum1', 'lvl2PropArr1', 'six', 'lvl2PropArr2'],
+                        },
+                    },
+                    required: ['lvl1PropStr'],
+                },
             });
         });
     });
