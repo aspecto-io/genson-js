@@ -1,7 +1,7 @@
 import { mergeSchemas, unwrapSchema } from './schema-builder';
-import { Schema } from './types';
+import { Schema, SchemaComparisonOptions } from './types';
 
-export function areSchemasEqual(schema1: Schema, schema2: Schema): boolean {
+export function areSchemasEqual(schema1: Schema, schema2: Schema, options?: SchemaComparisonOptions): boolean {
     if (schema1 === undefined && schema2 === undefined) return true;
     if (schema1 === undefined || schema2 === undefined) return false;
 
@@ -20,7 +20,7 @@ export function areSchemasEqual(schema1: Schema, schema2: Schema): boolean {
         const s2 = sorted2[i];
 
         if (s1.type !== s2.type) return false;
-        if (!areArraysEqual(s1.required, s2.required)) return false;
+        if (!options?.ignoreRequired && !areArraysEqual(s1.required, s2.required)) return false;
         if (!arePropsEqual(s1.properties, s2.properties)) return false;
         if (!areSchemasEqual(s1.items, s2.items)) return false;
     }
@@ -38,20 +38,24 @@ function areArraysEqual(arr1: string[], arr2: string[]): boolean {
     return areEqual;
 }
 
-function arePropsEqual(props1: Record<string, Schema>, props2: Record<string, Schema>): boolean {
+function arePropsEqual(
+    props1: Record<string, Schema>,
+    props2: Record<string, Schema>,
+    options?: SchemaComparisonOptions
+): boolean {
     if (props1 === undefined && props2 === undefined) return true;
     if (props1 === undefined || props2 === undefined) return false;
     const keys1 = Object.keys(props1);
     const keys2 = Object.keys(props2);
     if (!areArraysEqual(keys1, keys2)) return false;
     for (const key of keys1) {
-        if (!areSchemasEqual(props1[key], props2[key])) return false;
+        if (!areSchemasEqual(props1[key], props2[key], options)) return false;
     }
     return true;
 }
 
-export function isSuperset(mainSchema: Schema, subSchema: Schema): boolean {
+export function isSuperset(mainSchema: Schema, subSchema: Schema, options?: SchemaComparisonOptions): boolean {
     const mergedSchema = mergeSchemas([mainSchema, subSchema]);
-    const isModified = areSchemasEqual(mergedSchema, mainSchema);
+    const isModified = areSchemasEqual(mergedSchema, mainSchema, options);
     return isModified;
 }

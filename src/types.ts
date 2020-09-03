@@ -15,3 +15,11 @@ export type Schema = {
     required?: string[];
     anyOf?: Array<Schema>;
 };
+
+export type SchemaGenOptions = {
+    noRequired: boolean;
+};
+
+export type SchemaComparisonOptions = {
+    ignoreRequired: boolean;
+};

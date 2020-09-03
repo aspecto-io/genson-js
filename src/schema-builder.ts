@@ -1,6 +1,6 @@
-import { ValueType, Schema } from './types';
+import { ValueType, Schema, SchemaGenOptions } from './types';
 
-export function createSchemaFor(value: any): Schema {
+function createSchemaFor(value: any, options?: SchemaGenOptions): Schema {
     switch (typeof value) {
         case 'number':
             if (Number.isInteger(value)) {
@@ -18,7 +18,7 @@ export function createSchemaFor(value: any): Schema {
             if (Array.isArray(value)) {
                 return createSchemaForArray(value);
             }
-            return createSchemaForObject(value);
+            return createSchemaForObject(value, options);
     }
 }
 
@@ -31,7 +31,7 @@ function createSchemaForArray(arr: Array<any>): Schema {
     return { type: ValueType.Array, items };
 }
 
-function createSchemaForObject(obj: Object): Schema {
+function createSchemaForObject(obj: Object, options?: SchemaGenOptions): Schema {
     const keys = Object.keys(obj);
     if (keys.length === 0) {
         return {
@@ -42,10 +42,15 @@ function createSchemaForObject(obj: Object): Schema {
         props[key] = createSchemaFor(val);
         return props;
     }, {});
-    return { type: ValueType.Object, properties, required: keys };
+
+    const schema: Schema = { type: ValueType.Object, properties };
+    if (!options?.noRequired) {
+        schema.required = keys;
+    }
+    return schema;
 }
 
-function combineSchemas(schemas: Schema[]): Schema {
+function combineSchemas(schemas: Schema[], options?: SchemaGenOptions): Schema {
     const schemasByType: Record<ValueType, Schema[]> = {
         [ValueType.Null]: [],
         [ValueType.Boolean]: [],
@@ -73,7 +78,7 @@ function combineSchemas(schemas: Schema[]): Schema {
         [ValueType.Integer]: schemasByType[ValueType.Integer][0],
         [ValueType.String]: schemasByType[ValueType.String][0],
         [ValueType.Array]: combineArraySchemas(schemasByType[ValueType.Array]),
-        [ValueType.Object]: combineObjectSchemas(schemasByType[ValueType.Object]),
+        [ValueType.Object]: combineObjectSchemas(schemasByType[ValueType.Object], options),
     };
 
     if (resultSchemasByType[ValueType.Number]) {
@@ -113,7 +118,7 @@ function combineArraySchemas(schemas: Schema[]): Schema {
     };
 }
 
-function combineObjectSchemas(schemas: Schema[]): Schema {
+function combineObjectSchemas(schemas: Schema[], options?: SchemaGenOptions): Schema {
     if (!schemas || schemas.length === 0) {
         return undefined;
     }
@@ -155,7 +160,7 @@ function combineObjectSchemas(schemas: Schema[]): Schema {
     if (Object.keys(properties).length > 0) {
         combinedSchema.properties = properties;
     }
-    if (required.length > 0) {
+    if (!options?.noRequired && required.length > 0) {
         combinedSchema.required = required;
     }
 
@@ -212,17 +217,19 @@ function isContainerSchema(schema: Schema): boolean {
     return type === ValueType.Array || type === ValueType.Object;
 }
 
-export function generateSchema(value: any): Schema {
-    return createSchemaFor(value);
+// FACADE
+
+export function generateSchema(value: any, options?: SchemaGenOptions): Schema {
+    return createSchemaFor(value, options);
 }
 
-export function mergeSchemas(schemas: Schema[]): Schema {
-    const mergedSchema = combineSchemas(schemas);
+export function mergeSchemas(schemas: Schema[], options?: SchemaGenOptions): Schema {
+    const mergedSchema = combineSchemas(schemas, options);
     return mergedSchema;
 }
 
-export function extendSchema(schema: Schema, value: any): Schema {
-    const valueSchema = generateSchema(value);
-    const mergedSchema = combineSchemas([schema, valueSchema]);
+export function extendSchema(schema: Schema, value: any, options?: SchemaGenOptions): Schema {
+    const valueSchema = generateSchema(value, options);
+    const mergedSchema = combineSchemas([schema, valueSchema], options);
     return mergedSchema;
 }

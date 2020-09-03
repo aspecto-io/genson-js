@@ -55,6 +55,15 @@ describe('Schema Comparison', () => {
             expect(equal).toBe(false);
         });
 
+        it('should compare by required not equal w/ ignore required', async () => {
+            const equal = areSchemasEqual(
+                { type: ValueType.Object, properties: { test: { type: ValueType.String } }, required: ['test'] },
+                { type: ValueType.Object, properties: { test: { type: ValueType.String } }, required: [] },
+                { ignoreRequired: true }
+            );
+            expect(equal).toBe(true);
+        });
+
         it('should compare by required not equal (required=undefined)', async () => {
             const equal = areSchemasEqual(
                 { type: ValueType.Object, properties: { test: { type: ValueType.String } }, required: ['test'] },
@@ -315,6 +324,12 @@ describe('Schema Comparison', () => {
             };
 
             expect(areSchemasEqual(schema1, schema2)).toBe(true);
+
+            schema2.items.properties.lvl1PropObj2.properties.lvl2PropArr2.items.anyOf[2].type = [
+                ValueType.Boolean,
+                ValueType.String,
+            ];
+            expect(areSchemasEqual(schema1, schema2)).toBe(false);
         });
     });
 });
