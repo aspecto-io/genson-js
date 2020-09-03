@@ -220,7 +220,8 @@ function isContainerSchema(schema: Schema): boolean {
 // FACADE
 
 export function generateSchema(value: any, options?: SchemaGenOptions): Schema {
-    return createSchemaFor(value, options);
+    const clone = JSON.parse(JSON.stringify(value));
+    return createSchemaFor(clone, options);
 }
 
 export function mergeSchemas(schemas: Schema[], options?: SchemaGenOptions): Schema {

@@ -1,0 +1,159 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SchemaBuilder generation nested objects/arrays all cases combined circular refs should throw an error w/ explanation 1`] = `
+"Converting circular structure to JSON
+    --> starting at object with constructor 'Object'
+    |     property 'b' -> object with constructor 'Object'
+    --- property 'a' closes the circle"
+`;
+
+exports[`SchemaBuilder generation nested objects/arrays all cases combined should generate valid schemas for complex objects 1`] = `
+Object {
+  "items": Object {
+    "properties": Object {
+      "lvl1PropNum": Object {
+        "type": "number",
+      },
+      "lvl1PropObj1": Object {
+        "properties": Object {
+          "lvl2PropArr": Object {
+            "items": Object {
+              "type": Array [
+                "null",
+                "boolean",
+                "number",
+                "string",
+              ],
+            },
+            "type": "array",
+          },
+        },
+        "required": Array [
+          "lvl2PropArr",
+        ],
+        "type": "object",
+      },
+      "lvl1PropObj2": Object {
+        "properties": Object {
+          "lvl2PropArr1": Object {
+            "items": Object {
+              "type": "integer",
+            },
+            "type": "array",
+          },
+          "lvl2PropArr2": Object {
+            "items": Object {
+              "anyOf": Array [
+                Object {
+                  "type": Array [
+                    "integer",
+                    "string",
+                  ],
+                },
+                Object {
+                  "items": Object {
+                    "type": Array [
+                      "boolean",
+                      "integer",
+                    ],
+                  },
+                  "type": "array",
+                },
+                Object {
+                  "properties": Object {
+                    "lvl3PropNum1": Object {
+                      "type": "number",
+                    },
+                    "lvl3PropStr1": Object {
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              ],
+            },
+            "type": "array",
+          },
+          "lvl2PropNum1": Object {
+            "type": "integer",
+          },
+          "six": Object {
+            "type": "null",
+          },
+        },
+        "required": Array [
+          "lvl2PropNum1",
+          "lvl2PropArr1",
+          "six",
+          "lvl2PropArr2",
+        ],
+        "type": "object",
+      },
+      "lvl1PropStr": Object {
+        "type": "string",
+      },
+    },
+    "required": Array [
+      "lvl1PropStr",
+    ],
+    "type": "object",
+  },
+  "type": "array",
+}
+`;
+
+exports[`SchemaBuilder generation nested objects/arrays should combine object schemas and respect required property 1`] = `
+Object {
+  "properties": Object {
+    "one": Object {
+      "type": "integer",
+    },
+    "three": Object {
+      "properties": Object {
+        "five": Object {
+          "items": Object {
+            "type": "integer",
+          },
+          "type": "array",
+        },
+        "four": Object {
+          "type": "integer",
+        },
+        "seven": Object {
+          "items": Object {
+            "properties": Object {
+              "eight": Object {
+                "type": "number",
+              },
+              "nine": Object {
+                "type": "string",
+              },
+            },
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "six": Object {
+          "type": "null",
+        },
+      },
+      "required": Array [
+        "four",
+        "five",
+        "six",
+        "seven",
+      ],
+      "type": "object",
+    },
+    "two": Object {
+      "type": "string",
+    },
+  },
+  "required": Array [
+    "one",
+    "two",
+    "three",
+  ],
+  "type": "object",
+}
+`;
