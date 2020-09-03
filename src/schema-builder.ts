@@ -1,20 +1,4 @@
-export enum ValueType {
-    Null = 'null',
-    Boolean = 'boolean',
-    Integer = 'integer',
-    Number = 'number',
-    String = 'string',
-    Object = 'object',
-    Array = 'array',
-}
-
-type Schema = {
-    type?: ValueType | ValueType[];
-    items?: Schema;
-    properties?: Record<string, Schema>;
-    required?: string[];
-    anyOf?: Array<Schema>;
-};
+import { ValueType, Schema } from './types';
 
 export function createSchemaFor(value: any): Schema {
     switch (typeof value) {
@@ -178,7 +162,7 @@ function combineObjectSchemas(schemas: Schema[]): Schema {
     return combinedSchema;
 }
 
-function unwrapSchema(schema: Schema): Schema[] {
+export function unwrapSchema(schema: Schema): Schema[] {
     if (!schema) return [];
     if (schema.anyOf) {
         return unwrapSchemas(schema.anyOf);
@@ -189,13 +173,13 @@ function unwrapSchema(schema: Schema): Schema[] {
     return [schema];
 }
 
-function unwrapSchemas(schemas: Schema[]): Schema[] {
+export function unwrapSchemas(schemas: Schema[]): Schema[] {
     if (!schemas || schemas.length === 0) return [];
     const unwrappedSchemas = schemas.flatMap((schema) => unwrapSchema(schema));
     return unwrappedSchemas;
 }
 
-function wrapAnyOfSchema(schema: Schema): Schema {
+export function wrapAnyOfSchema(schema: Schema): Schema {
     const simpleSchemas = [];
     const complexSchemas = [];
     for (const subSchema of schema.anyOf) {
@@ -228,7 +212,6 @@ function isContainerSchema(schema: Schema): boolean {
     return type === ValueType.Array || type === ValueType.Object;
 }
 
-// facade
 export function generateSchema(value: any): Schema {
     return createSchemaFor(value);
 }
@@ -242,59 +225,4 @@ export function extendSchema(schema: Schema, value: any): Schema {
     const valueSchema = generateSchema(value);
     const mergedSchema = combineSchemas([schema, valueSchema]);
     return mergedSchema;
-}
-
-export function isSuperset(mainSchema: Schema, subSchema: Schema): boolean {
-    const mergedSchema = mergeSchemas([mainSchema, subSchema]);
-    const isModified = areSchemasEqual(mergedSchema, mainSchema);
-    return isModified;
-}
-
-export function areSchemasEqual(schema1: Schema, schema2: Schema): boolean {
-    if (schema1 === undefined && schema2 === undefined) return true;
-    if (schema1 === undefined || schema2 === undefined) return false;
-
-    const anyOf1 = unwrapSchema(schema1);
-    const anyOf2 = unwrapSchema(schema2);
-
-    if (anyOf1.length != anyOf2.length) return false;
-    if (anyOf1.length === 0) return true;
-
-    const typeComparator = (s1: Schema, s2: Schema) => s1.type.toLocaleString().localeCompare(s2.type.toLocaleString());
-    const sorted1 = [...anyOf1].sort(typeComparator);
-    const sorted2 = [...anyOf2].sort(typeComparator);
-
-    for (let i = 0; i < anyOf1.length; i++) {
-        const s1 = sorted1[i];
-        const s2 = sorted2[i];
-
-        if (s1.type !== s2.type) return false;
-        if (!areArraysEqual(s1.required, s2.required)) return false;
-        if (!arePropsEqual(s1.properties, s2.properties)) return false;
-        if (!areSchemasEqual(s1.items, s2.items)) return false;
-    }
-
-    return true;
-}
-
-function areArraysEqual(arr1: string[], arr2: string[]): boolean {
-    if (arr1 === undefined && arr2 === undefined) return true;
-    if (arr1 === undefined || arr2 === undefined) return false;
-    const set1 = new Set(arr1);
-    const set2 = new Set(arr2);
-    const combined = new Set([...arr1, ...arr2]);
-    const areEqual = combined.size === set1.size && combined.size === set2.size;
-    return areEqual;
-}
-
-function arePropsEqual(props1: Record<string, Schema>, props2: Record<string, Schema>): boolean {
-    if (props1 === undefined && props2 === undefined) return true;
-    if (props1 === undefined || props2 === undefined) return false;
-    const keys1 = Object.keys(props1);
-    const keys2 = Object.keys(props2);
-    if (!areArraysEqual(keys1, keys2)) return false;
-    for (const key of keys1) {
-        if (!areSchemasEqual(props1[key], props2[key])) return false;
-    }
-    return true;
 }

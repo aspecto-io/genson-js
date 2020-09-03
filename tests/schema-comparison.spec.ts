@@ -1,4 +1,4 @@
-import { areSchemasEqual, ValueType, generateSchema } from '../src';
+import { areSchemasEqual, ValueType } from '../src';
 
 describe('Schema Comparison', () => {
     describe('simple schemas', () => {
