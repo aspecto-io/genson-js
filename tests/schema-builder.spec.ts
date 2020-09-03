@@ -1,69 +1,69 @@
-import { generateSchema, mergeSchemas, ValueType } from '../src';
+import { generateSchema, mergeSchemas, ValueType, extendSchema } from '../src';
 import { pp } from './test-utils';
 
 describe('SchemaBuilder', () => {
     describe('generation', () => {
         describe('simple types', () => {
-            it('should build schema for integer', async () => {
+            it('should build schema for integer', () => {
                 const schema = generateSchema(1);
                 expect(schema).toEqual({ type: 'integer' });
             });
 
-            it('should build schema for number', async () => {
+            it('should build schema for number', () => {
                 const schema = generateSchema(1.1);
                 expect(schema).toEqual({ type: 'number' });
             });
 
-            it('should build schema for string', async () => {
+            it('should build schema for string', () => {
                 const schema = generateSchema('some string');
                 expect(schema).toEqual({ type: 'string' });
             });
 
-            it('should build schema for null', async () => {
+            it('should build schema for null', () => {
                 const schema = generateSchema(null);
                 expect(schema).toEqual({ type: 'null' });
             });
 
-            it('should build schema for boolean', async () => {
+            it('should build schema for boolean', () => {
                 const schema = generateSchema(false);
                 expect(schema).toEqual({ type: 'boolean' });
             });
 
-            it('should build schema for array', async () => {
+            it('should build schema for array', () => {
                 const schema = generateSchema([]);
                 expect(schema).toEqual({ type: 'array' });
             });
 
-            it('should build schema for object', async () => {
+            it('should build schema for object', () => {
                 const schema = generateSchema({});
                 expect(schema).toEqual({ type: 'object' });
             });
         });
 
         describe('arrays', () => {
-            it('it should generate schema for arrays of the same type', async () => {
+            it('it should generate schema for arrays of the same type', () => {
                 const schema = generateSchema([1, 2, 3]);
                 expect(schema).toEqual({ type: 'array', items: { type: 'integer' } });
             });
 
-            it('it should generate schema for arrays of the same type with floats', async () => {
+            it('it should generate schema for arrays of the same type with floats', () => {
                 const schema = generateSchema([1, 2.1, 3]);
                 expect(schema).toEqual({ type: 'array', items: { type: 'number' } });
             });
 
-            it('it should generate schema for arrays of different primitive types', async () => {
+            it('it should generate schema for arrays of different primitive types', () => {
                 const schema = generateSchema([1, 1.1, 'string', null, false, true]);
                 expect(schema).toEqual({ type: 'array', items: { type: ['null', 'boolean', 'number', 'string'] } });
             });
 
-            it('it should generate schema for arrays of different primitive types and ints only', async () => {
+            it('it should generate schema for arrays of different primitive types and ints only', () => {
                 const schema = generateSchema([1, 'string', null, false, true]);
                 expect(schema).toEqual({ type: 'array', items: { type: ['null', 'boolean', 'integer', 'string'] } });
             });
         });
 
         describe('objects', () => {
-            it('it should generate schema for object with props of the same type', async () => {
+            it('it should generate schema for object with props of the same type', () => {
                 const schema = generateSchema({ one: 1, two: 2 });
                 expect(schema).toEqual({
                     type: 'object',
@@ -72,7 +72,7 @@ describe('SchemaBuilder', () => {
                 });
             });
 
-            it('it should generate schema for object with props of different types', async () => {
+            it('it should generate schema for object with props of different types', () => {
                 const schema = generateSchema({ one: 1, two: 'second' });
                 expect(schema).toEqual({
                     type: 'object',
@@ -81,7 +81,7 @@ describe('SchemaBuilder', () => {
                 });
             });
 
-            it('it should generate schema for object with props of different types w/o required', async () => {
+            it('it should generate schema for object with props of different types w/o required', () => {
                 const schema = generateSchema({ one: 1, two: 'second' }, { noRequired: true });
                 expect(schema).toEqual({
                     type: 'object',
@@ -91,7 +91,7 @@ describe('SchemaBuilder', () => {
         });
 
         describe('nested array', () => {
-            it('should generate schema for nested arrays', async () => {
+            it('should generate schema for nested arrays', () => {
                 const schema = generateSchema([1, [2.1], [[3]]]);
                 expect(schema).toEqual({
                     type: 'array',
@@ -121,7 +121,7 @@ describe('SchemaBuilder', () => {
                 });
             });
 
-            it('should generate schema for nested arrays and simplify anyOf', async () => {
+            it('should generate schema for nested arrays and simplify anyOf', () => {
                 const schema = generateSchema([1, 'some string', null, [2, 'some other string', {}], [[3.1]]]);
                 expect(schema).toEqual({
                     type: 'array',
@@ -153,7 +153,7 @@ describe('SchemaBuilder', () => {
         });
 
         describe('nested objects/arrays', () => {
-            it('should combine object schemas and respect required property', async () => {
+            it('should combine object schemas and respect required property', () => {
                 const schema = generateSchema({
                     one: 1,
                     two: 'second',
@@ -207,7 +207,7 @@ describe('SchemaBuilder', () => {
         });
 
         describe('all cases combined', () => {
-            it('should generate valid schemas for complex objects', async () => {
+            it('should generate valid schemas for complex objects', () => {
                 const schema = generateSchema([
                     {
                         lvl1PropNum: 1,
@@ -309,12 +309,12 @@ describe('SchemaBuilder', () => {
     });
 
     describe('merging', () => {
-        it('should merge simple schemas', async () => {
+        it('should merge simple schemas', () => {
             const merged = mergeSchemas([{ type: ValueType.Number }, { type: ValueType.String }]);
             expect(merged).toEqual({ type: ['number', 'string'] });
         });
 
-        it('should merge array schemas', async () => {
+        it('should merge array schemas', () => {
             const merged = mergeSchemas([
                 {
                     type: ValueType.Array,
@@ -331,6 +331,41 @@ describe('SchemaBuilder', () => {
                 },
                 { type: ValueType.String },
             ]);
+            expect(merged).toEqual({
+                anyOf: [
+                    { type: ValueType.String },
+                    {
+                        type: ValueType.Array,
+                        items: { type: [ValueType.Number, ValueType.String, ValueType.Array] },
+                    },
+                ],
+            });
+        });
+    });
+
+    describe('extending', () => {
+        it('should extend simple schemas', () => {
+            const merged = extendSchema({ type: ValueType.Number }, 'some string');
+            expect(merged).toEqual({ type: ['number', 'string'] });
+        });
+
+        it('should extend array schemas', () => {
+            const merged = extendSchema(
+                {
+                    type: ValueType.Array,
+                    items: {
+                        anyOf: [
+                            {
+                                type: [ValueType.Number, ValueType.String],
+                            },
+                            {
+                                type: ValueType.Array,
+                            },
+                        ],
+                    },
+                },
+                'some string'
+            );
             expect(merged).toEqual({
                 anyOf: [
                     { type: ValueType.String },

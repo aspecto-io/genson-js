@@ -1,13 +1,14 @@
 import { areSchemasEqual, ValueType } from '../src';
+import { complexSchema1, complexSchema2 } from './fixtures';
 
 describe('Schema Comparison', () => {
     describe('simple schemas', () => {
-        it('should compare by type', async () => {
+        it('should compare by type', () => {
             const equal = areSchemasEqual({ type: ValueType.Number }, { type: ValueType.Number });
             expect(equal).toBe(true);
         });
 
-        it('should compare by props', async () => {
+        it('should compare by props', () => {
             const equal = areSchemasEqual(
                 { type: ValueType.Object, properties: { test: { type: ValueType.String } } },
                 { type: ValueType.Object, properties: { test: { type: ValueType.String } } }
@@ -15,7 +16,7 @@ describe('Schema Comparison', () => {
             expect(equal).toBe(true);
         });
 
-        it('should compare by props not eq', async () => {
+        it('should compare by props not eq', () => {
             const equal = areSchemasEqual(
                 { type: ValueType.Object, properties: { test: { type: ValueType.String } } },
                 { type: ValueType.Object, properties: { test: { type: ValueType.Number } } }
@@ -23,7 +24,7 @@ describe('Schema Comparison', () => {
             expect(equal).toBe(false);
         });
 
-        it('should compare by props not eq (properties=undefined)', async () => {
+        it('should compare by props not eq (properties=undefined)', () => {
             const equal = areSchemasEqual(
                 { type: ValueType.Object },
                 { type: ValueType.Object, properties: { test: { type: ValueType.Number } } }
@@ -31,7 +32,7 @@ describe('Schema Comparison', () => {
             expect(equal).toBe(false);
         });
 
-        it('should compare by props not eq (properties={})', async () => {
+        it('should compare by props not eq (properties={})', () => {
             const equal = areSchemasEqual(
                 { type: ValueType.Object, properties: {} },
                 { type: ValueType.Object, properties: { test: { type: ValueType.Number } } }
@@ -39,7 +40,7 @@ describe('Schema Comparison', () => {
             expect(equal).toBe(false);
         });
 
-        it('should compare by required', async () => {
+        it('should compare by required', () => {
             const equal = areSchemasEqual(
                 { type: ValueType.Object, properties: { test: { type: ValueType.String } }, required: ['test'] },
                 { type: ValueType.Object, properties: { test: { type: ValueType.String } }, required: ['test'] }
@@ -47,7 +48,7 @@ describe('Schema Comparison', () => {
             expect(equal).toBe(true);
         });
 
-        it('should compare by required not equal', async () => {
+        it('should compare by required not equal', () => {
             const equal = areSchemasEqual(
                 { type: ValueType.Object, properties: { test: { type: ValueType.String } }, required: ['test'] },
                 { type: ValueType.Object, properties: { test: { type: ValueType.String } }, required: [] }
@@ -55,7 +56,7 @@ describe('Schema Comparison', () => {
             expect(equal).toBe(false);
         });
 
-        it('should compare by required not equal w/ ignore required', async () => {
+        it('should compare by required not equal w/ ignore required', () => {
             const equal = areSchemasEqual(
                 { type: ValueType.Object, properties: { test: { type: ValueType.String } }, required: ['test'] },
                 { type: ValueType.Object, properties: { test: { type: ValueType.String } }, required: [] },
@@ -64,7 +65,7 @@ describe('Schema Comparison', () => {
             expect(equal).toBe(true);
         });
 
-        it('should compare by required not equal (required=undefined)', async () => {
+        it('should compare by required not equal (required=undefined)', () => {
             const equal = areSchemasEqual(
                 { type: ValueType.Object, properties: { test: { type: ValueType.String } }, required: ['test'] },
                 { type: ValueType.Object, properties: { test: { type: ValueType.String } } }
@@ -72,7 +73,7 @@ describe('Schema Comparison', () => {
             expect(equal).toBe(false);
         });
 
-        it('should compare by items', async () => {
+        it('should compare by items', () => {
             const equal = areSchemasEqual(
                 { type: ValueType.Array, items: { type: ValueType.String } },
                 { type: ValueType.Array, items: { type: ValueType.String } }
@@ -80,7 +81,7 @@ describe('Schema Comparison', () => {
             expect(equal).toBe(true);
         });
 
-        it('should compare by items not eq', async () => {
+        it('should compare by items not eq', () => {
             const equal = areSchemasEqual(
                 { type: ValueType.Array, items: { type: ValueType.String } },
                 { type: ValueType.Array, items: { type: ValueType.Number } }
@@ -90,17 +91,17 @@ describe('Schema Comparison', () => {
     });
 
     describe('simple wrapped schemas', () => {
-        it('should compare wrapped and unwrapped', async () => {
+        it('should compare wrapped and unwrapped', () => {
             const equal = areSchemasEqual({ type: ValueType.Number }, { type: [ValueType.Number] });
             expect(equal).toBe(true);
         });
 
-        it('should compare wrapped and unwrapped not equal', async () => {
+        it('should compare wrapped and unwrapped not equal', () => {
             const equal = areSchemasEqual({ type: ValueType.Number }, { type: [ValueType.String] });
             expect(equal).toBe(false);
         });
 
-        it('should compare multiple wrapped types', async () => {
+        it('should compare multiple wrapped types', () => {
             const equal = areSchemasEqual(
                 { type: [ValueType.Number, ValueType.String] },
                 { type: [ValueType.String, ValueType.Number] }
@@ -108,7 +109,7 @@ describe('Schema Comparison', () => {
             expect(equal).toBe(true);
         });
 
-        it('should compare multiple wrapped types not equal by length', async () => {
+        it('should compare multiple wrapped types not equal by length', () => {
             const equal = areSchemasEqual(
                 { type: [ValueType.Number, ValueType.String] },
                 { type: [ValueType.String, ValueType.Number, ValueType.Number] }
@@ -116,7 +117,7 @@ describe('Schema Comparison', () => {
             expect(equal).toBe(false);
         });
 
-        it('should compare multiple wrapped types not equal by type', async () => {
+        it('should compare multiple wrapped types not equal by type', () => {
             const equal = areSchemasEqual(
                 { type: [ValueType.Number, ValueType.String] },
                 { type: [ValueType.String, ValueType.Boolean] }
@@ -126,7 +127,7 @@ describe('Schema Comparison', () => {
     });
 
     describe('simple anyOf schemas', () => {
-        it('should compare wrapped and unwrapped', async () => {
+        it('should compare wrapped and unwrapped', () => {
             const equal = areSchemasEqual(
                 { anyOf: [{ type: ValueType.Number }] },
                 { anyOf: [{ type: [ValueType.Number] }] }
@@ -134,7 +135,7 @@ describe('Schema Comparison', () => {
             expect(equal).toBe(true);
         });
 
-        it('should compare wrapped and unwrapped not equal', async () => {
+        it('should compare wrapped and unwrapped not equal', () => {
             const equal = areSchemasEqual(
                 { anyOf: [{ type: ValueType.Number }] },
                 { anyOf: [{ type: [ValueType.String] }] }
@@ -142,7 +143,7 @@ describe('Schema Comparison', () => {
             expect(equal).toBe(false);
         });
 
-        it('should compare multiple wrapped types', async () => {
+        it('should compare multiple wrapped types', () => {
             const equal = areSchemasEqual(
                 { anyOf: [{ type: ValueType.Number }, { type: ValueType.String }] },
                 { anyOf: [{ type: [ValueType.String, ValueType.Number] }] }
@@ -150,7 +151,7 @@ describe('Schema Comparison', () => {
             expect(equal).toBe(true);
         });
 
-        it('should compare multiple unwrapped types', async () => {
+        it('should compare multiple unwrapped types', () => {
             const equal = areSchemasEqual(
                 { anyOf: [{ type: ValueType.Number }, { type: ValueType.String }] },
                 { anyOf: [{ type: ValueType.String }, { type: ValueType.Number }] }
@@ -158,7 +159,7 @@ describe('Schema Comparison', () => {
             expect(equal).toBe(true);
         });
 
-        it('should compare multiple unwrapped types not equal by length', async () => {
+        it('should compare multiple unwrapped types not equal by length', () => {
             const equal = areSchemasEqual(
                 { anyOf: [{ type: ValueType.String }, { type: ValueType.Number }] },
                 { anyOf: [{ type: ValueType.Number }, { type: ValueType.String }, { type: ValueType.String }] }
@@ -166,7 +167,7 @@ describe('Schema Comparison', () => {
             expect(equal).toBe(false);
         });
 
-        it('should compare multiple unwrapped types not equal by type', async () => {
+        it('should compare multiple unwrapped types not equal by type', () => {
             const equal = areSchemasEqual(
                 { anyOf: [{ type: ValueType.String }, { type: ValueType.Number }] },
                 { anyOf: [{ type: ValueType.Number }, { type: ValueType.Boolean }] }
@@ -176,152 +177,9 @@ describe('Schema Comparison', () => {
     });
 
     describe('complex schemas', () => {
-        it('should compare complex schemas', async () => {
-            const schema1 = {
-                type: ValueType.Array,
-                items: {
-                    type: ValueType.Object,
-                    properties: {
-                        lvl1PropNum: {
-                            type: ValueType.Number,
-                        },
-                        lvl1PropStr: {
-                            type: ValueType.String,
-                        },
-                        lvl1PropObj1: {
-                            type: ValueType.Object,
-                            properties: {
-                                lvl2PropArr: {
-                                    type: ValueType.Array,
-                                    items: {
-                                        type: [ValueType.Null, ValueType.Boolean, ValueType.Number, ValueType.String],
-                                    },
-                                },
-                            },
-                            required: ['lvl2PropArr'],
-                        },
-                        lvl1PropObj2: {
-                            type: ValueType.Object,
-                            properties: {
-                                lvl2PropNum1: {
-                                    type: ValueType.Integer,
-                                },
-                                lvl2PropArr1: {
-                                    type: ValueType.Array,
-                                    items: {
-                                        type: ValueType.Integer,
-                                    },
-                                },
-                                six: {
-                                    type: ValueType.Null,
-                                },
-                                lvl2PropArr2: {
-                                    type: ValueType.Array,
-                                    items: {
-                                        anyOf: [
-                                            {
-                                                type: [ValueType.Integer, ValueType.String],
-                                            },
-                                            {
-                                                type: ValueType.Array,
-                                                items: {
-                                                    type: [ValueType.Boolean, ValueType.Integer],
-                                                },
-                                            },
-                                            {
-                                                type: ValueType.Object,
-                                                properties: {
-                                                    lvl3PropNum1: {
-                                                        type: ValueType.Number,
-                                                    },
-                                                    lvl3PropStr1: {
-                                                        type: ValueType.String,
-                                                    },
-                                                },
-                                            },
-                                        ],
-                                    },
-                                },
-                            },
-                            required: ['lvl2PropNum1', 'lvl2PropArr1', 'six', 'lvl2PropArr2'],
-                        },
-                    },
-                    required: ['lvl1PropStr'],
-                },
-            };
-
-            const schema2 = {
-                type: ValueType.Array,
-                items: {
-                    type: ValueType.Object,
-                    properties: {
-                        lvl1PropNum: {
-                            type: [ValueType.Number],
-                        },
-                        lvl1PropStr: {
-                            type: [ValueType.String],
-                        },
-                        lvl1PropObj1: {
-                            type: ValueType.Object,
-                            properties: {
-                                lvl2PropArr: {
-                                    type: ValueType.Array,
-                                    items: {
-                                        type: [ValueType.Boolean, ValueType.Null, ValueType.Number, ValueType.String],
-                                    },
-                                },
-                            },
-                            required: ['lvl2PropArr'],
-                        },
-                        lvl1PropObj2: {
-                            type: ValueType.Object,
-                            properties: {
-                                lvl2PropNum1: {
-                                    type: ValueType.Integer,
-                                },
-                                lvl2PropArr1: {
-                                    type: ValueType.Array,
-                                    items: {
-                                        type: ValueType.Integer,
-                                    },
-                                },
-                                lvl2PropArr2: {
-                                    type: ValueType.Array,
-                                    items: {
-                                        anyOf: [
-                                            {
-                                                type: [ValueType.String, ValueType.Integer],
-                                            },
-                                            {
-                                                type: ValueType.Object,
-                                                properties: {
-                                                    lvl3PropStr1: {
-                                                        type: ValueType.String,
-                                                    },
-                                                    lvl3PropNum1: {
-                                                        type: ValueType.Number,
-                                                    },
-                                                },
-                                            },
-                                            {
-                                                type: ValueType.Array,
-                                                items: {
-                                                    type: [ValueType.Boolean, ValueType.Integer],
-                                                },
-                                            },
-                                        ],
-                                    },
-                                },
-                                six: {
-                                    type: ValueType.Null,
-                                },
-                            },
-                            required: ['lvl2PropArr1', 'lvl2PropNum1', 'six', 'lvl2PropArr2'],
-                        },
-                    },
-                    required: ['lvl1PropStr'],
-                },
-            };
+        it('should compare complex schemas', () => {
+            const schema1 = JSON.parse(JSON.stringify(complexSchema1));
+            const schema2 = JSON.parse(JSON.stringify(complexSchema2));
 
             expect(areSchemasEqual(schema1, schema2)).toBe(true);
 
