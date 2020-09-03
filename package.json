@@ -2,10 +2,14 @@
     "name": "genson-js",
     "version": "1.0.0",
     "main": "dist/index.js",
-    "license": "MIT",
+    "types": "dist/index.d.js",
+    "author": "Aspecto.io",
+    "license": "Apache-2.0",
+    "description": "JSON schema generator with a possibility to merge schemas",
     "scripts": {
         "test": "jest",
-        "build": "tsc"
+        "build": "tsc",
+        "prepublishOnly": "npm run build"
     },
     "devDependencies": {
         "@types/jest": "^26.0.10",
@@ -14,6 +18,16 @@
         "ts-jest": "^26.3.0",
         "typescript": "^4.0.2"
     },
+    "repository": {
+        "type": "git",
+        "url": "git+ssh://git@github.com/aspecto/genson-js.git"
+    },
+    "files": [
+        "dist/**/*.js",
+        "dist/**/*.d.ts",
+        "LICENSE",
+        "README.md"
+    ],
     "jest": {
         "testEnvironment": "node",
         "preset": "ts-jest",
