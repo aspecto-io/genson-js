@@ -246,7 +246,49 @@ describe('Schema Comparison', () => {
         it('should return true if second schema is a subset (object props, simple schema)', async () => {
             const result = isSubset(
                 { type: ValueType.Object, properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } } },
-                { type: ValueType.Object, properties: { propOne: { type: [ValueType.Integer] } } },
+                { type: ValueType.Object, properties: { propOne: { type: [ValueType.Integer] } } }
+            );
+            expect(result).toBe(true);
+        });
+        it('should return true if second schema is a subset (object props, simple schema, required)', async () => {
+            const result = isSubset(
+                {
+                    type: ValueType.Object,
+                    properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } },
+                    required: ['propOne'],
+                },
+                { type: ValueType.Object, properties: { propOne: { type: [ValueType.Integer] } } }
+            );
+            expect(result).toBe(true);
+        });
+
+        it('should return false if second schema is not a subset (object props, simple schema, required)', async () => {
+            const result = isSubset(
+                {
+                    type: ValueType.Object,
+                    properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } },
+                },
+                {
+                    type: ValueType.Object,
+                    properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } },
+                    required: ['propOne'],
+                }
+            );
+            expect(result).toBe(false);
+        });
+
+        it('should return true if second schema is a subset (object props, simple schema, required ignored)', async () => {
+            const result = isSubset(
+                {
+                    type: ValueType.Object,
+                    properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } },
+                },
+                {
+                    type: ValueType.Object,
+                    properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } },
+                    required: ['propOne'],
+                },
+                { ignoreRequired: true }
             );
             expect(result).toBe(true);
         });

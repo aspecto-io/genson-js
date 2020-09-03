@@ -1,5 +1,6 @@
 import { createSchema, mergeSchemas, ValueType, extendSchema } from '../src';
 import { pp } from './test-utils';
+import { type } from 'os';
 
 describe('SchemaBuilder', () => {
     describe('generation', () => {
@@ -160,6 +161,7 @@ describe('SchemaBuilder', () => {
                     three: { four: 5, five: [5], six: null, seven: [{}, { eight: 1.1 }, { nine: 'nine' }] },
                 });
                 expect(schema).toMatchSnapshot();
+            });
         });
 
         describe('all cases combined', () => {
@@ -189,6 +191,7 @@ describe('SchemaBuilder', () => {
                 ]);
 
                 expect(schema).toMatchSnapshot();
+            });
         });
 
         describe('circular refs', () => {
@@ -255,6 +258,17 @@ describe('SchemaBuilder', () => {
                         items: { type: [ValueType.Number, ValueType.String, ValueType.Array] },
                     },
                 ],
+            });
+        });
+
+        it('should merge object schemas', async () => {
+            const merged = mergeSchemas([
+                { type: ValueType.Object },
+                { type: ValueType.Object, properties: { prop1: { type: ValueType.String } } },
+            ]);
+            expect(merged).toEqual({
+                type: ValueType.Object,
+                properties: { prop1: { type: ValueType.String } },
             });
         });
     });

@@ -1,13 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`SchemaBuilder generation nested objects/arrays all cases combined circular refs should throw an error w/ explanation 1`] = `
-"Converting circular structure to JSON
-    --> starting at object with constructor 'Object'
-    |     property 'b' -> object with constructor 'Object'
-    --- property 'a' closes the circle"
-`;
-
-exports[`SchemaBuilder generation nested objects/arrays all cases combined should generate valid schemas for complex objects 1`] = `
+exports[`SchemaBuilder generation all cases combined should generate valid schemas for complex objects 1`] = `
 Object {
   "items": Object {
     "properties": Object {
@@ -100,6 +93,13 @@ Object {
   },
   "type": "array",
 }
+`;
+
+exports[`SchemaBuilder generation circular refs should throw an error w/ explanation 1`] = `
+"Converting circular structure to JSON
+    --> starting at object with constructor 'Object'
+    |     property 'b' -> object with constructor 'Object'
+    --- property 'a' closes the circle"
 `;
 
 exports[`SchemaBuilder generation nested objects/arrays should combine object schemas and respect required property 1`] = `
