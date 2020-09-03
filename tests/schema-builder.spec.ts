@@ -209,13 +209,21 @@ describe('SchemaBuilder', () => {
                         lvl2PropNum1: 5,
                         lvl2PropArr1: [5],
                         six: null,
-                        lvl2PropArr2: [{}, { lvl3PropNum1: 1.2 }, { lvl3PropStr1: 'nine' }],
+                        lvl2PropArr2: [
+                            {},
+                            { lvl3PropNum1: 1.2 },
+                            { lvl3PropStr1: 'nine' },
+                            [1, false],
+                            1,
+                            'some string',
+                        ],
                     },
                 },
                 { lvl1PropStr: 'one' },
                 { lvl1PropNum: 1.2, lvl1PropStr: 'one' },
                 { lvl1PropStr: 'one', lvl1PropObj1: { lvl2PropArr: [2.3, null, 'some string', false] } },
             ]);
+
             expect(schema).toEqual({
                 type: 'array',
                 items: {
@@ -257,15 +265,28 @@ describe('SchemaBuilder', () => {
                                 lvl2PropArr2: {
                                     type: 'array',
                                     items: {
-                                        type: 'object',
-                                        properties: {
-                                            lvl3PropNum1: {
-                                                type: 'number',
+                                        anyOf: [
+                                            {
+                                                type: ['integer', 'string'],
                                             },
-                                            lvl3PropStr1: {
-                                                type: 'string',
+                                            {
+                                                type: 'array',
+                                                items: {
+                                                    type: ['boolean', 'integer'],
+                                                },
                                             },
-                                        },
+                                            {
+                                                type: 'object',
+                                                properties: {
+                                                    lvl3PropNum1: {
+                                                        type: 'number',
+                                                    },
+                                                    lvl3PropStr1: {
+                                                        type: 'string',
+                                                    },
+                                                },
+                                            },
+                                        ],
                                     },
                                 },
                             },
