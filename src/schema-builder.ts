@@ -228,7 +228,80 @@ function isContainerSchema(schema: Schema): boolean {
     return type === ValueType.Array || type === ValueType.Object;
 }
 
-// facede
+// facade
 export function generateSchema(value: any): Schema {
     return createSchemaFor(value);
+}
+
+export function mergeSchemas(schemas: Schema[]): Schema {
+    const mergedSchema = combineSchemas(schemas);
+    return mergedSchema;
+}
+
+export function extendSchema(schema: Schema, value: any): Schema {
+    const valueSchema = generateSchema(value);
+    const mergedSchema = combineSchemas([schema, valueSchema]);
+    return mergedSchema;
+}
+
+export function isSuperset(mainSchema: Schema, subSchema: Schema): boolean {
+    const mergedSchema = mergeSchemas([mainSchema, subSchema]);
+    const isModified = areSchemasEqual(mergedSchema, mainSchema);
+    return isModified;
+}
+
+export function areSchemasEqual(schema1: Schema, schema2: Schema): boolean {
+    if (schema1 === undefined && schema2 === undefined) return true;
+    if (schema1 === undefined || schema2 === undefined) return false;
+
+    if (!areAnyOfSchemasEqual(schema1, schema2)) return false;
+    if (schema1.type !== schema2.type) return false;
+    if (!areArraysEqual(schema1.required, schema2.required)) return false;
+    if (!arePropsEqual(schema1.properties, schema2.properties)) return false;
+    if (!areSchemasEqual(schema1.items, schema2.items)) return false;
+
+    return true;
+}
+
+function areArraysEqual(arr1: string[], arr2: string[]): boolean {
+    if (arr1 === undefined && arr2 === undefined) return true;
+    if (arr1 === undefined || arr2 === undefined) return false;
+    const set1 = new Set(arr1);
+    const set2 = new Set(arr2);
+    const combined = new Set([...arr1, ...arr2]);
+    const areEqual = combined.size === set1.size && combined.size === set2.size;
+    return areEqual;
+}
+
+function arePropsEqual(props1: Record<string, Schema>, props2: Record<string, Schema>): boolean {
+    if (props1 === undefined && props2 === undefined) return true;
+    if (props1 === undefined || props2 === undefined) return false;
+    const keys1 = Object.keys(props1);
+    const keys2 = Object.keys(props2);
+    if (!areArraysEqual(keys1, keys2)) return false;
+    for (const key of keys1) {
+        if (!areSchemasEqual(props1[key], props2[key])) return false;
+    }
+    return true;
+}
+
+function areAnyOfSchemasEqual(schema1: Schema, schema2: Schema): Boolean {
+    const anyOf1 = unwrapSchema(schema1);
+    const anyOf2 = unwrapSchema(schema2);
+
+    if (anyOf1.length != anyOf2.length) return false;
+    if (anyOf1.length === 0) return true;
+    if (anyOf1.length === 1) {
+        return areSchemasEqual(anyOf1[0], anyOf2[0]);
+    }
+
+    const sorted1 = [...anyOf1].sort();
+    const sorted2 = [...anyOf2].sort();
+
+    for (let i = 0; i < anyOf1.length; i++) {
+        const s1 = sorted1[i];
+        const s2 = sorted2[i];
+        if (!areSchemasEqual(s1, s2)) return false;
+    }
+    return true;
 }
