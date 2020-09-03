@@ -1,6 +1,5 @@
 import { createSchema, mergeSchemas, ValueType, extendSchema } from '../src';
 import { pp } from './test-utils';
-import { type } from 'os';
 
 describe('SchemaBuilder', () => {
     describe('generation', () => {
