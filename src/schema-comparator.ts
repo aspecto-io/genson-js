@@ -54,8 +54,9 @@ function arePropsEqual(
     return true;
 }
 
-export function isSuperset(mainSchema: Schema, subSchema: Schema, options?: SchemaComparisonOptions): boolean {
+export function isSubset(mainSchema: Schema, subSchema: Schema, options?: SchemaComparisonOptions): boolean {
     const mergedSchema = mergeSchemas([mainSchema, subSchema]);
+    // console.log(JSON.stringify(mergedSchema, null, 4));
     const isModified = areSchemasEqual(mergedSchema, mainSchema, options);
     return isModified;
 }

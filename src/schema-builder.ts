@@ -122,7 +122,6 @@ function combineObjectSchemas(schemas: Schema[], options?: SchemaGenOptions): Sc
     if (!schemas || schemas.length === 0) {
         return undefined;
     }
-    const propCounter: Record<string, number> = {};
     const allPropSchemas = schemas.map((s) => s.properties).filter(Boolean);
     const schemasByProp: Record<string, Schema[]> = {};
     for (const propSchemas of allPropSchemas) {
@@ -130,14 +129,8 @@ function combineObjectSchemas(schemas: Schema[], options?: SchemaGenOptions): Sc
             if (!schemasByProp[prop]) {
                 schemasByProp[prop] = [];
             }
-            const unwrappedSchema = unwrapSchema(schema);
-            schemasByProp[prop].push(...unwrappedSchema);
-
-            if (!propCounter[prop]) {
-                propCounter[prop] = 1;
-            } else {
-                propCounter[prop]++;
-            }
+            const unwrappedSchemas = unwrapSchema(schema);
+            schemasByProp[prop].push(...unwrappedSchemas);
         }
     }
 
@@ -150,18 +143,16 @@ function combineObjectSchemas(schemas: Schema[], options?: SchemaGenOptions): Sc
         return props;
     }, {});
 
-    const schemasCount = schemas.length;
-    const required = Object.entries(propCounter)
-        .filter(([, val]) => val === schemasCount)
-        .map(([key]) => key);
-
     const combinedSchema: Schema = { type: ValueType.Object };
 
     if (Object.keys(properties).length > 0) {
         combinedSchema.properties = properties;
     }
-    if (!options?.noRequired && required.length > 0) {
-        combinedSchema.required = required;
+    if (!options?.noRequired) {
+        const required = intersection(schemas.map((s) => s.required));
+        if (required.length > 0) {
+            combinedSchema.required = required;
+        }
     }
 
     return combinedSchema;
@@ -207,6 +198,25 @@ export function wrapAnyOfSchema(schema: Schema): Schema {
     return { anyOf };
 }
 
+function intersection(valuesArr: string[][]) {
+    if (valuesArr.length === 0) return [];
+    const arrays = valuesArr.filter(Array.isArray);
+    const counter: Record<string, number> = {};
+    for (const arr of arrays) {
+        for (const val of arr) {
+            if (!counter[val]) {
+                counter[val] = 1;
+            } else {
+                counter[val]++;
+            }
+        }
+    }
+    const result = Object.entries(counter)
+        .filter(([_, value]) => value === arrays.length)
+        .map(([key]) => key);
+    return result;
+}
+
 function isSimpleSchema(schema: Schema): boolean {
     const keys = Object.keys(schema);
     return keys.length === 1 && keys[0] === 'type';
@@ -219,7 +229,7 @@ function isContainerSchema(schema: Schema): boolean {
 
 // FACADE
 
-export function generateSchema(value: any, options?: SchemaGenOptions): Schema {
+export function createSchema(value: any, options?: SchemaGenOptions): Schema {
     const clone = JSON.parse(JSON.stringify(value));
     return createSchemaFor(clone, options);
 }
@@ -230,7 +240,7 @@ export function mergeSchemas(schemas: Schema[], options?: SchemaGenOptions): Sch
 }
 
 export function extendSchema(schema: Schema, value: any, options?: SchemaGenOptions): Schema {
-    const valueSchema = generateSchema(value, options);
+    const valueSchema = createSchema(value, options);
     const mergedSchema = combineSchemas([schema, valueSchema], options);
     return mergedSchema;
 }

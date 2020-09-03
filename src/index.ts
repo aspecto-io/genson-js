@@ -1,3 +1,3 @@
 export * from './types';
-export { extendSchema, mergeSchemas, generateSchema } from './schema-builder';
+export { extendSchema, mergeSchemas, createSchema } from './schema-builder';
 export * from './schema-comparator';

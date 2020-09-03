@@ -1,70 +1,70 @@
-import { generateSchema, mergeSchemas, ValueType, extendSchema } from '../src';
+import { createSchema, mergeSchemas, ValueType, extendSchema } from '../src';
 import { pp } from './test-utils';
 
 describe('SchemaBuilder', () => {
     describe('generation', () => {
         describe('simple types', () => {
             it('should build schema for integer', () => {
-                const schema = generateSchema(1);
+                const schema = createSchema(1);
                 expect(schema).toEqual({ type: 'integer' });
             });
 
             it('should build schema for number', () => {
-                const schema = generateSchema(1.1);
+                const schema = createSchema(1.1);
                 expect(schema).toEqual({ type: 'number' });
             });
 
             it('should build schema for string', () => {
-                const schema = generateSchema('some string');
+                const schema = createSchema('some string');
                 expect(schema).toEqual({ type: 'string' });
             });
 
             it('should build schema for null', () => {
-                const schema = generateSchema(null);
+                const schema = createSchema(null);
                 expect(schema).toEqual({ type: 'null' });
             });
 
             it('should build schema for boolean', () => {
-                const schema = generateSchema(false);
+                const schema = createSchema(false);
                 expect(schema).toEqual({ type: 'boolean' });
             });
 
             it('should build schema for array', () => {
-                const schema = generateSchema([]);
+                const schema = createSchema([]);
                 expect(schema).toEqual({ type: 'array' });
             });
 
             it('should build schema for object', () => {
-                const schema = generateSchema({});
+                const schema = createSchema({});
                 expect(schema).toEqual({ type: 'object' });
             });
         });
 
         describe('arrays', () => {
             it('it should generate schema for arrays of the same type', () => {
-                const schema = generateSchema([1, 2, 3]);
+                const schema = createSchema([1, 2, 3]);
                 expect(schema).toEqual({ type: 'array', items: { type: 'integer' } });
             });
 
             it('it should generate schema for arrays of the same type with floats', () => {
-                const schema = generateSchema([1, 2.1, 3]);
+                const schema = createSchema([1, 2.1, 3]);
                 expect(schema).toEqual({ type: 'array', items: { type: 'number' } });
             });
 
             it('it should generate schema for arrays of different primitive types', () => {
-                const schema = generateSchema([1, 1.1, 'string', null, false, true]);
+                const schema = createSchema([1, 1.1, 'string', null, false, true]);
                 expect(schema).toEqual({ type: 'array', items: { type: ['null', 'boolean', 'number', 'string'] } });
             });
 
             it('it should generate schema for arrays of different primitive types and ints only', () => {
-                const schema = generateSchema([1, 'string', null, false, true]);
+                const schema = createSchema([1, 'string', null, false, true]);
                 expect(schema).toEqual({ type: 'array', items: { type: ['null', 'boolean', 'integer', 'string'] } });
             });
         });
 
         describe('objects', () => {
             it('it should generate schema for object with props of the same type', () => {
-                const schema = generateSchema({ one: 1, two: 2 });
+                const schema = createSchema({ one: 1, two: 2 });
                 expect(schema).toEqual({
                     type: 'object',
                     properties: { one: { type: 'integer' }, two: { type: 'integer' } },
@@ -73,7 +73,7 @@ describe('SchemaBuilder', () => {
             });
 
             it('it should generate schema for object with props of different types', () => {
-                const schema = generateSchema({ one: 1, two: 'second' });
+                const schema = createSchema({ one: 1, two: 'second' });
                 expect(schema).toEqual({
                     type: 'object',
                     properties: { one: { type: 'integer' }, two: { type: 'string' } },
@@ -82,7 +82,7 @@ describe('SchemaBuilder', () => {
             });
 
             it('it should generate schema for object with props of different types w/o required', () => {
-                const schema = generateSchema({ one: 1, two: 'second' }, { noRequired: true });
+                const schema = createSchema({ one: 1, two: 'second' }, { noRequired: true });
                 expect(schema).toEqual({
                     type: 'object',
                     properties: { one: { type: 'integer' }, two: { type: 'string' } },
@@ -92,7 +92,7 @@ describe('SchemaBuilder', () => {
 
         describe('nested array', () => {
             it('should generate schema for nested arrays', () => {
-                const schema = generateSchema([1, [2.1], [[3]]]);
+                const schema = createSchema([1, [2.1], [[3]]]);
                 expect(schema).toEqual({
                     type: 'array',
                     items: {
@@ -122,7 +122,7 @@ describe('SchemaBuilder', () => {
             });
 
             it('should generate schema for nested arrays and simplify anyOf', () => {
-                const schema = generateSchema([1, 'some string', null, [2, 'some other string', {}], [[3.1]]]);
+                const schema = createSchema([1, 'some string', null, [2, 'some other string', {}], [[3.1]]]);
                 expect(schema).toEqual({
                     type: 'array',
                     items: {
@@ -154,7 +154,7 @@ describe('SchemaBuilder', () => {
 
         describe('nested objects/arrays', () => {
             it('should combine object schemas and respect required property', () => {
-                const schema = generateSchema({
+                const schema = createSchema({
                     one: 1,
                     two: 'second',
                     three: { four: 5, five: [5], six: null, seven: [{}, { eight: 1.1 }, { nine: 'nine' }] },
@@ -164,7 +164,7 @@ describe('SchemaBuilder', () => {
 
         describe('all cases combined', () => {
             it('should generate valid schemas for complex objects', () => {
-                const schema = generateSchema([
+                const schema = createSchema([
                     {
                         lvl1PropNum: 1,
                         lvl1PropStr: 'second',
@@ -199,7 +199,7 @@ describe('SchemaBuilder', () => {
                 b.a = a;
 
                 expect(() => {
-                    generateSchema(a);
+                    createSchema(a);
                 }).toThrowErrorMatchingSnapshot();
             });
         });
@@ -210,7 +210,7 @@ describe('SchemaBuilder', () => {
                     func() {},
                     someProp: 'string',
                 };
-                const schema = generateSchema(value);
+                const schema = createSchema(value);
                 expect(schema).toEqual({
                     type: 'object',
                     properties: {

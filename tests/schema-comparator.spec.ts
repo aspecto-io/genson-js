@@ -1,5 +1,6 @@
-import { areSchemasEqual, ValueType } from '../src';
+import { areSchemasEqual, ValueType, isSubset } from '../src';
 import { complexSchema1, complexSchema2 } from './fixtures';
+import { type } from 'os';
 
 describe('Schema Comparison', () => {
     describe('simple schemas', () => {
@@ -188,6 +189,66 @@ describe('Schema Comparison', () => {
                 ValueType.String,
             ];
             expect(areSchemasEqual(schema1, schema2)).toBe(false);
+        });
+    });
+
+    describe('isSubset', () => {
+        it('should return true is shemas are equal', async () => {
+            const result = isSubset({ anyOf: [{ type: ValueType.Number }] }, { anyOf: [{ type: [ValueType.Number] }] });
+            expect(result).toBe(true);
+        });
+
+        it('should return false if second schema is not a subset', async () => {
+            const result = isSubset({ anyOf: [{ type: ValueType.Number }] }, { anyOf: [{ type: [ValueType.String] }] });
+            expect(result).toBe(false);
+        });
+
+        it('should return false if second schema is a superset instead of subset', async () => {
+            const result = isSubset(
+                { anyOf: [{ type: ValueType.Number }] },
+                { anyOf: [{ type: [ValueType.String, ValueType.Number] }] }
+            );
+            expect(result).toBe(false);
+        });
+
+        it('should return true if second schema is a subset', async () => {
+            const result = isSubset(
+                { anyOf: [{ type: [ValueType.String, ValueType.Number] }] },
+                { anyOf: [{ type: ValueType.Number }] }
+            );
+            expect(result).toBe(true);
+        });
+
+        it('should return true if second schema is a subset (anyOf, simple)', async () => {
+            const result = isSubset(
+                { anyOf: [{ type: [ValueType.String, ValueType.Number] }] },
+                { type: ValueType.Number }
+            );
+            expect(result).toBe(true);
+        });
+
+        it('should return true if second schema is a subset (array items, simple schema)', async () => {
+            const result = isSubset(
+                { type: ValueType.Array, items: { type: [ValueType.Boolean, ValueType.Integer] } },
+                { type: ValueType.Array, items: { type: [ValueType.Boolean] } }
+            );
+            expect(result).toBe(true);
+        });
+
+        it('should return true if second schema is a subset (object props, simple schema)', async () => {
+            const result = isSubset(
+                { type: ValueType.Object, properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } } },
+                { type: ValueType.Object }
+            );
+            expect(result).toBe(true);
+        });
+
+        it('should return true if second schema is a subset (object props, simple schema)', async () => {
+            const result = isSubset(
+                { type: ValueType.Object, properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } } },
+                { type: ValueType.Object, properties: { propOne: { type: [ValueType.Integer] } } },
+            );
+            expect(result).toBe(true);
         });
     });
 });

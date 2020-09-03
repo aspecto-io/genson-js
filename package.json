@@ -5,9 +5,21 @@
     "types": "dist/index.d.js",
     "author": "Aspecto.io",
     "license": "Apache-2.0",
+    "keywords": [
+        "json",
+        "schema",
+        "json-schema",
+        "jsonschema",
+        "object",
+        "generate",
+        "generator",
+        "builder",
+        "merge"
+    ],
     "description": "JSON schema generator with a possibility to merge schemas",
     "scripts": {
         "test": "jest",
+        "tdd": "jest --watch",
         "build": "tsc",
         "prepublishOnly": "npm run build"
     },
