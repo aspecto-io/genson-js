@@ -1,5 +1,6 @@
-import { areSchemasEqual, ValueType, isSubset } from '../src';
+import { areSchemasEqual, ValueType, isSubset, createSchema } from '../src';
 import { complexSchema1, complexSchema2 } from './fixtures';
+import { pp } from './test-utils';
 
 describe('Schema Comparison', () => {
     describe('simple schemas', () => {
@@ -249,28 +250,33 @@ describe('Schema Comparison', () => {
             );
             expect(result).toBe(true);
         });
+
         it('should return true if second schema is a subset (object props, simple schema, required)', async () => {
             const result = isSubset(
                 {
                     type: ValueType.Object,
                     properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } },
-                    required: ['propOne'],
                 },
-                { type: ValueType.Object, properties: { propOne: { type: [ValueType.Integer] } } }
+                {
+                    type: ValueType.Object,
+                    properties: { propOne: { type: [ValueType.Integer] } },
+                    required: ['propOne'],
+                }
             );
             expect(result).toBe(true);
         });
 
         it('should return false if second schema is not a subset (object props, simple schema, required)', async () => {
+            // presence of required prop is more restrictive
             const result = isSubset(
                 {
                     type: ValueType.Object,
                     properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } },
+                    required: ['propOne'],
                 },
                 {
                     type: ValueType.Object,
                     properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } },
-                    required: ['propOne'],
                 }
             );
             expect(result).toBe(false);
