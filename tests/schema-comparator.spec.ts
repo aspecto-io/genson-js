@@ -287,11 +287,37 @@ describe('Schema Comparison', () => {
                 {
                     type: ValueType.Object,
                     properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } },
+                    required: ['propOne'],
                 },
                 {
                     type: ValueType.Object,
                     properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } },
-                    required: ['propOne'],
+                },
+                { ignoreRequired: true }
+            );
+            expect(result).toBe(true);
+        });
+
+        it('should ignore required in nested objects (object props, simple schema, required ignored)', async () => {
+            const result = isSubset(
+                {
+                    type: ValueType.Object,
+                    properties: {
+                        propOne: {
+                            type: ValueType.Object,
+                            properties: { propTwo: { type: [ValueType.Boolean, ValueType.Integer] } },
+                            required: ['propTwo'],
+                        },
+                    },
+                },
+                {
+                    type: ValueType.Object,
+                    properties: {
+                        propOne: {
+                            type: ValueType.Object,
+                            properties: { propTwo: { type: [ValueType.Boolean, ValueType.Integer] } },
+                        },
+                    },
                 },
                 { ignoreRequired: true }
             );

@@ -21,8 +21,8 @@ export function areSchemasEqual(schema1: Schema, schema2: Schema, options?: Sche
 
         if (s1.type !== s2.type) return false;
         if (!options?.ignoreRequired && !areArraysEqual(s1.required, s2.required)) return false;
-        if (!arePropsEqual(s1.properties, s2.properties)) return false;
-        if (!areSchemasEqual(s1.items, s2.items)) return false;
+        if (!arePropsEqual(s1.properties, s2.properties, options)) return false;
+        if (!areSchemasEqual(s1.items, s2.items, options)) return false;
     }
 
     return true;
