@@ -149,7 +149,7 @@ function combineObjectSchemas(schemas: Schema[], options?: SchemaGenOptions): Sc
         combinedSchema.properties = properties;
     }
     if (!options?.noRequired) {
-        const required = intersection(schemas.map((s) => s.required));
+        const required = intersection(schemas.map((s) => s.required || []));
         if (required.length > 0) {
             combinedSchema.required = required;
         }

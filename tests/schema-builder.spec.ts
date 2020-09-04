@@ -191,6 +191,52 @@ describe('SchemaBuilder', () => {
 
                 expect(schema).toMatchSnapshot();
             });
+
+            it('should consider value as required if it is present in all objects', async () => {
+                const val = [
+                    {
+                        arr: [
+                            {
+                                prop1: 'test string',
+                            },
+                            {
+                                prop2: 'test string',
+                            },
+                        ],
+                    },
+                    {
+                        arr: [
+                            {
+                                prop1: 'test',
+                            },
+                        ],
+                    },
+                ];
+                const schema = createSchema(val);
+                expect(schema).toEqual({
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            arr: {
+                                type: 'array',
+                                items: {
+                                    type: 'object',
+                                    properties: {
+                                        prop1: {
+                                            type: 'string',
+                                        },
+                                        prop2: {
+                                            type: 'string',
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        required: ['arr'],
+                    },
+                });
+            });
         });
 
         describe('circular refs', () => {
