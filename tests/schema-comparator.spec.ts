@@ -1,6 +1,5 @@
 import { areSchemasEqual, ValueType, isSubset } from '../src';
 import { complexSchema1, complexSchema2 } from './fixtures';
-import { type } from 'os';
 
 describe('Schema Comparison', () => {
     describe('simple schemas', () => {
