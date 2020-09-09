@@ -38,6 +38,11 @@ describe('SchemaBuilder', () => {
                 const schema = createSchema({});
                 expect(schema).toEqual({ type: 'object' });
             });
+
+            it('should build schema for undefined', () => {
+                const schema = createSchema(undefined);
+                expect(schema).toEqual({ type: 'null' });
+            });
         });
 
         describe('arrays', () => {
