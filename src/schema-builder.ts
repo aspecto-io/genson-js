@@ -230,6 +230,7 @@ function isContainerSchema(schema: Schema): boolean {
 // FACADE
 
 export function createSchema(value: any, options?: SchemaGenOptions): Schema {
+    if (typeof value === 'undefined') value = null;
     const clone = JSON.parse(JSON.stringify(value));
     return createSchemaFor(clone, options);
 }
