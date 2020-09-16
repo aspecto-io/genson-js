@@ -323,5 +323,22 @@ describe('Schema Comparison', () => {
             );
             expect(result).toBe(true);
         });
+
+        it('should return false if second schema is not a subset (empty vs non-empty array)', async () => {
+            // array w/o items is more restrictive
+            const result = isSubset(
+                {
+                    type: ValueType.Array,
+                },
+                {
+                    type: ValueType.Array,
+                    items: {
+                        type: ValueType.Object,
+                        properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } },
+                    },
+                }
+            );
+            expect(result).toBe(false);
+        });
     });
 });
