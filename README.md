@@ -61,6 +61,24 @@ const merged = mergeSchemas([{ type: ValueType.Number }, { type: ValueType.Strin
 // { type: ['number', 'string'] }
 ```
 
+### Create compound schema
+
+Shorthand for createSchema + mergeSchemas.  
+Can take multiple inputs and create one compound schema:
+
+```ts
+import { createCompoundSchema } from 'genson-js';
+
+const schema = createCompoundSchema([{ age: 19, name: 'John' }, { age: 23, admin: true }, { age: 35 }]);
+
+// Will create the following schema:
+// {
+//   type: 'object',
+//   properties: { admin: { type: 'boolean' }, age: { type: 'integer' }, name: { type: 'string' } },
+//   required: ['age']
+// }
+```
+
 ### Exending schemas
 
 You can extend existing schema to match some value:

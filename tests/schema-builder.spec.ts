@@ -1,4 +1,4 @@
-import { createSchema, mergeSchemas, ValueType, extendSchema } from '../src';
+import { createSchema, mergeSchemas, ValueType, extendSchema, createCompoundSchema } from '../src';
 import { pp } from './test-utils';
 
 describe('SchemaBuilder', () => {
@@ -277,6 +277,17 @@ describe('SchemaBuilder', () => {
         });
     });
 
+    describe('createCompoundSchema', () => {
+        it('should create compound schema from multiple inputs', () => {
+            const schema = createCompoundSchema([{ age: 35 }, { age: 19, name: 'John' }, { age: 23, admin: true }]);
+            expect(schema).toEqual({
+                type: 'object',
+                properties: { admin: { type: 'boolean' }, age: { type: 'integer' }, name: { type: 'string' } },
+                required: ['age']
+            });
+        });
+    });
+
     describe('merging', () => {
         it('should merge simple schemas', () => {
             const merged = mergeSchemas([{ type: ValueType.Number }, { type: ValueType.String }]);
@@ -323,7 +334,11 @@ describe('SchemaBuilder', () => {
         });
 
         it('should merge more than 2 schemas', async () => {
-            const merged = mergeSchemas([{ type: ValueType.Number }, { type: ValueType.String }, { type: ValueType.Boolean }]);
+            const merged = mergeSchemas([
+                { type: ValueType.Number },
+                { type: ValueType.String },
+                { type: ValueType.Boolean },
+            ]);
             expect(merged).toEqual({ type: ['boolean', 'number', 'string'] });
         });
     });
