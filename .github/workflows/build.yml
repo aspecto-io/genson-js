@@ -1,5 +1,5 @@
-name: Build	
-on: [push]	
+name: Build
+on: [push]
 
 jobs:	
   build:	
@@ -13,6 +13,6 @@ jobs:
 
       - name: build	
         run: yarn run build	
-        
+
       - name: test	
         run: yarn test
