@@ -50,7 +50,7 @@ The following schema will be created:
 
 ### Merging schemas
 
-You can merge 2 schemas, so that merged schema would be kind of a superset of the schemas that it was built from:
+You can merge 2 or more schemas, so that merged schema would be kind of a superset of the schemas that it was built from:
 
 ```ts
 import { mergeSchemas } from 'genson-js';
@@ -68,7 +68,7 @@ You can extend existing schema to match some value:
 ```ts
 import { extendSchema } from 'genson-js';
 
-const extended = extendSchema({ type: ValueType.Number }, 'string');
+const extended = extendSchema({ type: ValueType.Number }, 'some string');
 
 // will create extended schema like this:
 // { type: ['number', 'string'] }
@@ -76,7 +76,7 @@ const extended = extendSchema({ type: ValueType.Number }, 'string');
 
 ### Comparing schemas
 
-You can extend compare 2 schemas for equality like this:
+You can compare 2 schemas for equality like this:
 
 ```ts
 import { areSchemasEqual } from 'genson-js';
@@ -88,8 +88,6 @@ areSchemasEqual({ type: ValueType.Number }, { type: ValueType.Number });
 ### Subset
 
 You can also check if one schema is a subset of another one like so:
-
-You can extend compare 2 schemas for equality like this:
 
 ```ts
 import { isSubset } from 'genson-js';
