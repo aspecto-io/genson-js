@@ -245,3 +245,8 @@ export function extendSchema(schema: Schema, value: any, options?: SchemaGenOpti
     const mergedSchema = combineSchemas([schema, valueSchema], options);
     return mergedSchema;
 }
+
+export function createCompoundSchema(values: any[], options?: SchemaGenOptions): Schema {
+    const schemas = values.map(value => createSchema(value, options));
+    return mergeSchemas(schemas, options);
+}
