@@ -27,7 +27,7 @@ const schema = createSchema({
 
 The following schema will be created:
 
-```json
+```js
 {
   type: "object",
   properties: {
