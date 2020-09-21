@@ -1,4 +1,6 @@
 # genson-js
+![Build](https://github.com/aspecto-io/genson-js/workflows/Build/badge.svg) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) [![TypeScript](https://badgen.net/npm/types/env-var)](http://www.typescriptlang.org/) [![NPM version](https://img.shields.io/npm/v/genson-js.svg)](https://www.npmjs.com/package/genson-js)
+
 
 **genson-js** is a user-friendly **JSON Schema** generator built in TypeScript/JavaScript.
 
@@ -9,7 +11,7 @@ genson-js's core function is to take JSON objects and generate schemas that desc
 
 ## Usage
 
-#### Creating schemas
+### Creating schemas
 
 To infer a schema from existing object:
 
@@ -21,29 +23,32 @@ const schema = createSchema({
     languages: ['c++', 'java'],
     age: 40,
 });
-
-// will create the following schema:
-// {
-//   type: "object",
-//   properties: {
-//     userName: {
-//       type: "string",
-//     },
-//     languages: {
-//       type: "array",
-//       items: {
-//         type: "string",
-//       },
-//     },
-//     age: {
-//       type: "integer",
-//     },
-//   },
-//   required: ["userName", "languages", "age"],
-// };
 ```
 
-#### Merging schemas
+The following schema will be created:
+
+```json
+{
+  type: "object",
+  properties: {
+    userName: {
+      type: "string",
+    },
+    languages: {
+      type: "array",
+      items: {
+        type: "string",
+      },
+    },
+    age: {
+      type: "integer",
+    },
+  },
+  required: ["userName", "languages", "age"],
+};
+```
+
+### Merging schemas
 
 You can merge 2 schemas, so that merged schema would be kind of a superset of the schemas that it was built from:
 
@@ -56,7 +61,7 @@ const merged = mergeSchemas([{ type: ValueType.Number }, { type: ValueType.Strin
 // { type: ['number', 'string'] }
 ```
 
-#### Exending schemas
+### Exending schemas
 
 You can extend existing schema to match some value:
 
@@ -69,7 +74,7 @@ const extended = extendSchema({ type: ValueType.Number }, 'string');
 // { type: ['number', 'string'] }
 ```
 
-#### Comparing schemas
+### Comparing schemas
 
 You can extend compare 2 schemas for equality like this:
 
@@ -80,7 +85,7 @@ areSchemasEqual({ type: ValueType.Number }, { type: ValueType.Number });
 // will return true
 ```
 
-#### Subset
+### Subset
 
 You can also check if one schema is a subset of another one like so:
 
@@ -95,5 +100,5 @@ isSubset(
 );
 // will return true
 ```
-
-You can find more example in the unit tests.
+<hr/>
+You can find more examples in the unit tests.
