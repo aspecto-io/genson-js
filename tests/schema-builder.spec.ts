@@ -321,6 +321,11 @@ describe('SchemaBuilder', () => {
                 properties: { prop1: { type: ValueType.String } },
             });
         });
+
+        it('should merge more than 2 schemas', async () => {
+            const merged = mergeSchemas([{ type: ValueType.Number }, { type: ValueType.String }, { type: ValueType.Boolean }]);
+            expect(merged).toEqual({ type: ['boolean', 'number', 'string'] });
+        });
     });
 
     describe('extending', () => {
