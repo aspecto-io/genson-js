@@ -123,7 +123,8 @@ function combineObjectSchemas(schemas: Schema[], options?: SchemaGenOptions): Sc
         return undefined;
     }
     const allPropSchemas = schemas.map((s) => s.properties).filter(Boolean);
-    const schemasByProp: Record<string, Schema[]> = {};
+    const schemasByProp: Record<string, Schema[]> = Object.create(null);
+    // const schemasByProp: Record<string, Schema[]> = {};
     for (const propSchemas of allPropSchemas) {
         for (const [prop, schema] of Object.entries(propSchemas)) {
             if (!schemasByProp[prop]) {
@@ -247,6 +248,6 @@ export function extendSchema(schema: Schema, value: any, options?: SchemaGenOpti
 }
 
 export function createCompoundSchema(values: any[], options?: SchemaGenOptions): Schema {
-    const schemas = values.map(value => createSchema(value, options));
+    const schemas = values.map((value) => createSchema(value, options));
     return mergeSchemas(schemas, options);
 }

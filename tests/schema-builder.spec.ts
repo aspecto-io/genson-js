@@ -244,6 +244,50 @@ describe('SchemaBuilder', () => {
             });
         });
 
+        describe('prototype methods', () => {
+            function createObjectWithProtoMethods(): Record<string, any> {
+                return {
+                    constructor: 'constructor value',
+                    hasOwnProperty: 'hasOwnProperty value',
+                    isPrototypeOf: 'isPrototypeOf value',
+                    propertyIsEnumerable: 'propertyIsEnumerable value',
+                    toLocaleString: 'toLocaleString value',
+                    toString: 'toString value',
+                    valueOf: 'valueOf value',
+                    __defineGetter__: '__defineGetter__ value',
+                    __defineSetter__: '__defineSetter__ value',
+                    __lookupGetter__: '__lookupGetter__ value',
+                    __lookupSetter__: '__lookupSetter__ value',
+                    __proto__: '__proto__ value',
+                };
+            }
+
+            it('should work for props with the same names as Object.prototype methods', async () => {
+                // it's improtant to keep them in array, as this is more complex case
+                const value: any = [createObjectWithProtoMethods(), createObjectWithProtoMethods()];
+                const schema = createSchema(value);
+                expect(schema).toEqual({
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            constructor: { type: 'string' },
+                            hasOwnProperty: { type: 'string' },
+                            isPrototypeOf: { type: 'string' },
+                            propertyIsEnumerable: { type: 'string' },
+                            toLocaleString: { type: 'string' },
+                            toString: { type: 'string' },
+                            valueOf: { type: 'string' },
+                            __defineGetter__: { type: 'string' },
+                            __defineSetter__: { type: 'string' },
+                            __lookupGetter__: { type: 'string' },
+                            __lookupSetter__: { type: 'string' },
+                        },
+                    },
+                });
+            });
+        });
+
         describe('circular refs', () => {
             it('should throw an error w/ explanation', async () => {
                 const a: any = {};
@@ -283,7 +327,7 @@ describe('SchemaBuilder', () => {
             expect(schema).toEqual({
                 type: 'object',
                 properties: { admin: { type: 'boolean' }, age: { type: 'integer' }, name: { type: 'string' } },
-                required: ['age']
+                required: ['age'],
             });
         });
     });
