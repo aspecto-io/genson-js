@@ -39,7 +39,7 @@ function createSchemaForObject(obj: Object, options?: SchemaGenOptions): Schema 
         };
     }
     const properties = Object.entries(obj).reduce((props, [key, val]) => {
-        props[key] = createSchemaFor(val);
+        props[key] = createSchemaFor(val, options);
         return props;
     }, {});
 

@@ -166,6 +166,17 @@ describe('SchemaBuilder', () => {
                 });
                 expect(schema).toMatchSnapshot();
             });
+
+            it('should generate schema for nested object with props of different types w/o required', () => {
+                const schema = createSchema({ one: 1, two: { a: 'value' } }, { noRequired: true });
+                expect(schema).toEqual({
+                    type: 'object',
+                    properties: {
+                        one: { type: 'integer' },
+                        two: { type: 'object', properties: { a: { type: 'string' } } },
+                    },
+                });
+            });
         });
 
         describe('all cases combined', () => {
