@@ -253,6 +253,26 @@ describe('SchemaBuilder', () => {
                     },
                 });
             });
+
+            it('should generate schema for array of objects w/o required', () => {
+                const schema = createSchema(
+                    [
+                        { one: 'a', two: 'b' },
+                        { one: 'aa', two: 'bb' },
+                    ],
+                    { noRequired: true }
+                );
+                expect(schema).toEqual({
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            one: { type: 'string' },
+                            two: { type: 'string' },
+                        },
+                    },
+                });
+            });
         });
 
         describe('prototype methods', () => {
