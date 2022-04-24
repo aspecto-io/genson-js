@@ -79,7 +79,7 @@ const schema = createCompoundSchema([{ age: 19, name: 'John' }, { age: 23, admin
 // }
 ```
 
-### Exending schemas
+### Extending schemas
 
 You can extend existing schema to match some value:
 
