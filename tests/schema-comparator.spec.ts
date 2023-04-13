@@ -1,6 +1,6 @@
-import { areSchemasEqual, ValueType, isSubset, createSchema } from '../src';
+import { areSchemasEqual, ValueType, isSubset } from '../src';
 import { complexSchema1, complexSchema2 } from './fixtures';
-import { pp } from './test-utils';
+import {describe, it, expect} from '@jest/globals';
 
 describe('Schema Comparison', () => {
     describe('simple schemas', () => {
@@ -35,7 +35,9 @@ describe('Schema Comparison', () => {
 
         it('should compare by props not eq (properties={})', () => {
             const equal = areSchemasEqual(
+                        //valid: {a: 1, b: 2}, {test: 1}, {test: "a"}
                 { type: ValueType.Object, properties: {} },
+                        //valid: {test: 1}, invalid: {a: 1, b: 2}, {test: "a"}
                 { type: ValueType.Object, properties: { test: { type: ValueType.Number } } }
             );
             expect(equal).toBe(false);
@@ -191,7 +193,6 @@ describe('Schema Comparison', () => {
             expect(areSchemasEqual(schema1, schema2)).toBe(false);
         });
     });
-
     describe('isSubset', () => {
         it('should return true is shemas are equal', async () => {
             const result = isSubset({ anyOf: [{ type: ValueType.Number }] }, { anyOf: [{ type: [ValueType.Number] }] });
@@ -236,14 +237,16 @@ describe('Schema Comparison', () => {
         });
 
         it('should return true if second schema is a subset (object props, simple schema)', async () => {
-            const result = isSubset(
-                { type: ValueType.Object, properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } } },
-                { type: ValueType.Object }
-            );
-            expect(result).toBe(true);
+            //valid: {}, {propOne: null }, {propOne: 1}, invalid: {propOne: "asd"}
+            const s1 = { type: ValueType.Object, properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } } }
+            //valid: {},  {propOne: 1 }, {propOne: "asd"}
+            const s2 = { type: ValueType.Object }
+
+            expect(isSubset(s1, s2)).toBeFalsy();
+            expect(isSubset(s2, s1)).toBeTruthy();
         });
 
-        it('should return true if second schema is a subset (object props, simple schema)', async () => {
+        it('should return true if second schema is a subset (object props, simple schema) v2', async () => {
             const result = isSubset(
                 { type: ValueType.Object, properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } } },
                 { type: ValueType.Object, properties: { propOne: { type: [ValueType.Integer] } } }
@@ -325,20 +328,130 @@ describe('Schema Comparison', () => {
         });
 
         it('should return false if second schema is not a subset (empty vs non-empty array)', async () => {
-            // array w/o items is more restrictive
-            const result = isSubset(
-                {
-                    type: ValueType.Array,
+            // valid: [], [1], [null], [{propOne: "asd"}]
+            const s1 = {
+                type: ValueType.Array,
+            };
+            // valid: [], [{}], [{propOne: 1}], [{propOne: null}], invalid: [{propOne: "asd"}]
+            const s2 = {
+                type: ValueType.Array,
+                items: {
+                    type: ValueType.Object,
+                    properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } },
                 },
-                {
-                    type: ValueType.Array,
-                    items: {
-                        type: ValueType.Object,
-                        properties: { propOne: { type: [ValueType.Boolean, ValueType.Integer] } },
-                    },
-                }
-            );
-            expect(result).toBe(false);
+            };
+            expect(isSubset(s1, s2)).toBeTruthy();
+            expect(isSubset(s2, s1)).toBeFalsy();
+        });
+        it("required handled as subsets", async () => {
+            //valid: {}, {test1: "asd"}, {test1: "asd", test2: "asd"}, invalid: {test2: "asd"}
+            const s1 = {
+                type: ValueType.Object,
+                properties: { test1: { type: ValueType.String }, test2: { type: ValueType.String } },
+                required: ["test1"],
+            }
+            //valid: {}, {test1: "asd", test2: "asd"}, invalid: {test1: "asd"}, {test2: "asd"}
+            const s2 = {
+                type: ValueType.Object,
+                properties: { test1: { type: ValueType.String }, test2: { type: ValueType.String } },
+                required: ["test1", "test2"],
+            }
+            //expect(isSubset(s1, s2)).toBeTruthy();
+            expect(isSubset(s2, s1)).toBeFalsy();
+        });
+        it('additional properties stays', async () => {
+            //valid: {test: "asd"} invalid: {test: "asd", test2: "asd"}
+            const s1 = {
+                type: ValueType.Object,
+                properties: { test: { type: ValueType.String } },
+                required: ["test"],
+                nullable: false,
+                additionalProperties: false,
+            };
+            //valid: {test: "asd"}, {test: "asd", test2: "asd"}
+            const s2 = {
+                type: ValueType.Object,
+                properties: { test: { type: ValueType.String } },
+                required: ["test"],
+                nullable: false,
+                additionalProperties: true,
+            };
+            expect(isSubset(s2, s1)).toBeTruthy();
+            expect(isSubset(s1, s2)).toBeFalsy();
+        });
+        it('additional properties works on props', async () => {
+            const s1 = {
+                type: ValueType.Object,
+                properties: { test: { type: ValueType.String }, test2: { type: ValueType.String } },
+                nullable: false,
+                additionalProperties: false,
+            };
+            const s2 = {
+                type: ValueType.Object,
+                properties: { test: { type: ValueType.String } },
+                nullable: false,
+                additionalProperties: true,
+            };
+            expect(isSubset(s2, s1)).toBeTruthy();
+            expect(isSubset(s1, s2)).toBeFalsy();
+        });
+        it('additional properties works on props both ways', async () => {
+            //no required
+            //valid: {test: "asd"}, {test: "asd", test2: "asd"}, invalid: {test: "asd", test2: 5}
+            const s1 = {
+                type: ValueType.Object,
+                properties: { test: { type: ValueType.String }, test2: { type: ValueType.String } },
+                nullable: false,
+                additionalProperties: true,
+            };
+            //valid: {test: "asd"}, {test: "asd", test2: 5}
+            const s2 = {
+                type: ValueType.Object,
+                properties: { test: { type: ValueType.String } },
+                nullable: false,
+                additionalProperties: true,
+            };
+            //expect(isSubset(s2, s1)).toBeTruthy();
+            expect(isSubset(s1, s2)).toBeFalsy();
+        });
+        it("nullable should work", async () => {
+            //valid: {test: "asd"}, null
+            const s1 = {
+                type: ValueType.Object,
+                properties: { test: { type:  ValueType.String } },
+                required: ["test"],
+                nullable: true,
+                additionalProperties: true,
+            };
+            //valid: {test: "asd"}, invalid: null
+            const s2 = {
+                type: ValueType.Object,
+                properties: { test: { type:  ValueType.String } },
+                required: ["test"],
+                nullable: false,
+                additionalProperties: true,
+            };
+            expect(isSubset(s1, s2)).toBeTruthy();
+            expect(isSubset(s2, s1)).toBeFalsy();
+        });
+
+        it("nullable should work v2", async () => {
+            //valid: {test: "asd"}, null
+            const s1 = {
+                type: ValueType.Object,
+                nullable: true,
+                additionalProperties: true,
+            };
+            //valid: {test: "asd"}, invalid: null
+            const s2 = {
+                type: ValueType.Object,
+                properties: { test: { type:  ValueType.String } },
+                required: ["test"],
+                nullable: false,
+                additionalProperties: true,
+            };
+            expect(isSubset(s1, s2)).toBeTruthy();
+            expect(isSubset(s2, s1)).toBeFalsy();
         });
     });
 });
