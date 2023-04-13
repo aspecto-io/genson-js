@@ -20,9 +20,9 @@
     "scripts": {
         "test": "jest",
         "tdd": "jest --watch",
-        "build": "cd \"$(dirname \"$0\")\" && tsc -p ./tsconfig-build.json",
+        "build": "tsc -p tsconfig-build.json",
         "prepublishOnly": "npm run build",
-        "postinstall": "npm run build"
+        "prepare": "npm run build"
     },
     "devDependencies": {
         "@types/jest": "^27.5.1",
