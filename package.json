@@ -20,7 +20,7 @@
     "scripts": {
         "test": "jest",
         "tdd": "jest --watch",
-        "build": "tsc -p ./tsconfig-build.json",
+        "build": "cd \"$(dirname \"$0\")\" && tsc -p ./tsconfig-build.json",
         "prepublishOnly": "npm run build",
         "postinstall": "npm run build"
     },
