@@ -29,6 +29,7 @@ Object {
       "lvl1PropObj2": Object {
         "properties": Object {
           "lvl2PropArr1": Object {
+            "description": "some description",
             "items": Object {
               "type": "integer",
             },
