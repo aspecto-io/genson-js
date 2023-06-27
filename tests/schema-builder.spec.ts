@@ -210,6 +210,8 @@ describe('SchemaBuilder', () => {
                     {
                         lvl1PropNum: 1,
                         lvl1PropStr: 'second',
+                        addEnumForProperty: (propName: string) => propName === 'lvl1PropStr'? ['first', 'second', 'third'] : undefined,
+                        addDescriptionOfProperty: (propName: string) => propName === 'lvl1PropStr'? 'enum prop' : undefined,
                         lvl1PropObj1: { lvl2PropArr: [1, 2] },
                         lvl1PropObj2: {
                             addDescriptionOfProperty: (propName: string) => propName === 'lvl2PropArr1'? 'some description' : undefined,

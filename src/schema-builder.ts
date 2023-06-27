@@ -1,19 +1,26 @@
 import { ValueType, Schema, SchemaGenOptions } from './types';
 
-function createSchemaFor(value: any, options?: SchemaGenOptions, description? : string): Schema {
+function createSchemaFor(value: any, options?: SchemaGenOptions, description? : string, enums? : string[]): Schema {
+    let additions = {};
+    if(enums){
+        additions["enum"] = enums;
+    }
+    if (description) {
+        additions["description"] = description;
+    }
     switch (typeof value) {
         case 'number':
             if (Number.isInteger(value)) {
-                return description ? { type: ValueType.Integer, description } : { type: ValueType.Integer };
+                return { type: ValueType.Integer, ...additions };
             }
-            return description ? { type: ValueType.Number, description } : { type: ValueType.Number };
+            return { type: ValueType.Number, ...additions };
         case 'boolean':
-            return description ? { type: ValueType.Boolean, description } : { type: ValueType.Boolean };
+            return { type: ValueType.Boolean, ...additions };
         case 'string':
-            return description ? { type: ValueType.String, description } : { type: ValueType.String };
+            return { type: ValueType.String, ...additions };
         case 'object':
             if (value === null) {
-                return description ? { type: ValueType.Null, description } : { type: ValueType.Null };
+                return { type: ValueType.Null, ...additions };
             }
             if (Array.isArray(value)) {
                 return createSchemaForArray(value, options, description);
@@ -43,13 +50,18 @@ function createSchemaForObject(obj: Object, options?: SchemaGenOptions, descript
     }
     const properties = Object.entries(obj).reduce((props, [key, val]) => {
         let description : string | undefined = undefined;
+        let enums : string[] | undefined = undefined;
         
         if(obj["addDescriptionOfProperty"]){
-            description= obj["addDescriptionOfProperty"](key);
+            description = obj["addDescriptionOfProperty"](key);
+        }
+
+        if(obj["addEnumForProperty"]){
+            enums = obj["addEnumForProperty"](key);
         }
 
         if(typeof val !== 'function'){
-            props[key] = createSchemaFor(val, options, description);
+            props[key] = createSchemaFor(val, options, description, enums);
         }
         return props;
     }, {});
