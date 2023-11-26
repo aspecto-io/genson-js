@@ -1,52 +1,83 @@
 import { ValueType, Schema, SchemaGenOptions } from './types';
 
-function createSchemaFor(value: any, options?: SchemaGenOptions): Schema {
+function createSchemaFor(value: any, options?: SchemaGenOptions, description? : string, enums? : string[]): Schema {
+    let additions = {};
+    if(enums){
+        additions["enum"] = enums;
+    }
+    if (description) {
+        additions["description"] = description;
+    }
     switch (typeof value) {
         case 'number':
             if (Number.isInteger(value)) {
-                return { type: ValueType.Integer };
+                return { type: ValueType.Integer, ...additions };
             }
-            return { type: ValueType.Number };
+            return { type: ValueType.Number, ...additions };
         case 'boolean':
-            return { type: ValueType.Boolean };
+            return { type: ValueType.Boolean, ...additions };
         case 'string':
-            return { type: ValueType.String };
+            return { type: ValueType.String, ...additions };
         case 'object':
             if (value === null) {
-                return { type: ValueType.Null };
+                return { type: ValueType.Null, ...additions };
             }
             if (Array.isArray(value)) {
-                return createSchemaForArray(value, options);
+                return createSchemaForArray(value, options, description);
             }
-            return createSchemaForObject(value, options);
+            return createSchemaForObject(value, options, description);
     }
 }
 
-function createSchemaForArray(arr: Array<any>, options?: SchemaGenOptions): Schema {
+function createSchemaForArray(arr: Array<any>, options?: SchemaGenOptions, description? : string): Schema {
     if (arr.length === 0) {
-        return { type: ValueType.Array };
+        return description ? { type: ValueType.Array, description } : { type: ValueType.Array };
     }
     const elementSchemas = arr.map((value) => createSchemaFor(value, options));
     const items = combineSchemas(elementSchemas);
-    return { type: ValueType.Array, items };
+    return description ? { type: ValueType.Array, items, description } : { type: ValueType.Array, items };
 }
 
-function createSchemaForObject(obj: Object, options?: SchemaGenOptions): Schema {
+function createSchemaForObject(obj: Object, options?: SchemaGenOptions, description? : string): Schema {
     const keys = Object.keys(obj);
+    const nonFunctionKeys = keys.filter((key) => typeof obj[key] !== 'function');
     if (keys.length === 0) {
-        return {
+
+        return description ? {
             type: ValueType.Object,
-        };
+            description
+        } : { type: ValueType.Object };
     }
     const properties = Object.entries(obj).reduce((props, [key, val]) => {
-        props[key] = createSchemaFor(val, options);
+        let description : string | undefined = undefined;
+        let enums : string[] | undefined = undefined;
+        
+        if(obj["addDescriptionOfProperty"]){
+            description = obj["addDescriptionOfProperty"](key);
+        }
+
+        if(obj["addEnumForProperty"]){
+            enums = obj["addEnumForProperty"](key);
+        }
+
+        if(typeof val !== 'function'){
+            props[key] = createSchemaFor(val, options, description, enums);
+        }
         return props;
     }, {});
 
-    const schema: Schema = { type: ValueType.Object, properties };
+    const schema: Schema = description ? { type: ValueType.Object, properties, description } : { type: ValueType.Object, properties };
+
+    let requiredKeys = nonFunctionKeys;
+    
     if (!options?.noRequired) {
-        schema.required = keys;
+        if(obj["excludeFromRequired"]){
+            const excluded : string[] = obj["excludeFromRequired"]();
+            requiredKeys = requiredKeys.filter(x => !excluded.includes(x))
+        }
+        schema.required = requiredKeys;
     }
+
     return schema;
 }
 
@@ -231,9 +262,9 @@ function isContainerSchema(schema: Schema): boolean {
 // FACADE
 
 export function createSchema(value: any, options?: SchemaGenOptions): Schema {
+    JSON.stringify(value);//just to catch circular dependencies
     if (typeof value === 'undefined') value = null;
-    const clone = JSON.parse(JSON.stringify(value));
-    return createSchemaFor(clone, options);
+    return createSchemaFor(value, options);
 }
 
 export function mergeSchemas(schemas: Schema[], options?: SchemaGenOptions): Schema {

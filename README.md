@@ -1,3 +1,8 @@
+# Disclamer
+
+this repository is based on https://github.com/aspecto-io/genson-js
+contains some minor tweaks that allow use of `description` tag and make `required` collection more flexible
+
 # genson-js
 ![Build](https://github.com/aspecto-io/genson-js/workflows/Build/badge.svg) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) [![TypeScript](https://badgen.net/npm/types/env-var)](http://www.typescriptlang.org/) [![NPM version](https://img.shields.io/npm/v/genson-js.svg)](https://www.npmjs.com/package/genson-js)
 

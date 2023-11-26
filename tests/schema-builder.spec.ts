@@ -1,3 +1,4 @@
+import { type } from 'os';
 import { createSchema, mergeSchemas, ValueType, extendSchema, createCompoundSchema } from '../src';
 import { pp } from './test-utils';
 
@@ -180,13 +181,40 @@ describe('SchemaBuilder', () => {
         });
 
         describe('all cases combined', () => {
+            it('should exclude from required all properties that are returned by excludeFromRequired function', () => {
+                type TestType = {
+                    notRequired?: string;
+                    required: string;
+                    excludeFromRequired? : () => string[]
+                };
+
+                const value: TestType = {
+                    notRequired: 'sometimes undefined',
+                    required: 'never undefined',
+                    excludeFromRequired: () =>['notRequired']
+                }
+
+                const schema = createSchema(value);
+                expect(schema).toEqual({
+                    type: 'object',
+                    properties: {
+                        notRequired: { type: 'string' },
+                        required: { type: 'string' },
+                    },
+                    required: ['required'],
+                });
+            });
+
             it('should generate valid schemas for complex objects', () => {
                 const schema = createSchema([
                     {
                         lvl1PropNum: 1,
                         lvl1PropStr: 'second',
+                        addEnumForProperty: (propName: string) => propName === 'lvl1PropStr'? ['first', 'second', 'third'] : undefined,
+                        addDescriptionOfProperty: (propName: string) => propName === 'lvl1PropStr'? 'enum prop' : undefined,
                         lvl1PropObj1: { lvl2PropArr: [1, 2] },
                         lvl1PropObj2: {
+                            addDescriptionOfProperty: (propName: string) => propName === 'lvl2PropArr1'? 'some description' : undefined,
                             lvl2PropNum1: 5,
                             lvl2PropArr1: [5],
                             six: null,
@@ -273,6 +301,8 @@ describe('SchemaBuilder', () => {
                     },
                 });
             });
+
+
         });
 
         describe('prototype methods', () => {

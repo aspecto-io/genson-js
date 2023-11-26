@@ -14,6 +14,7 @@ export type Schema = {
     properties?: Record<string, Schema>;
     required?: string[];
     anyOf?: Array<Schema>;
+    description?: string;
 };
 
 export type SchemaGenOptions = {
