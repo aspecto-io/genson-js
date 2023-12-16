@@ -28,6 +28,9 @@ function createSchemaForArray(arr: Array<any>, options?: SchemaGenOptions): Sche
     }
     const elementSchemas = arr.map((value) => createSchemaFor(value, options));
     const items = combineSchemas(elementSchemas);
+    if(options?.noAdditionalProperties){
+        addNoAddtionalProperties(items);
+    }
     return { type: ValueType.Array, items };
 }
 
@@ -46,6 +49,9 @@ function createSchemaForObject(obj: Object, options?: SchemaGenOptions): Schema 
     const schema: Schema = { type: ValueType.Object, properties };
     if (!options?.noRequired) {
         schema.required = keys;
+    }
+    if(options?.noAdditionalProperties){
+        addNoAddtionalProperties(schema);
     }
     return schema;
 }
@@ -250,4 +256,19 @@ export function extendSchema(schema: Schema, value: any, options?: SchemaGenOpti
 export function createCompoundSchema(values: any[], options?: SchemaGenOptions): Schema {
     const schemas = values.map((value) => createSchema(value, options));
     return mergeSchemas(schemas, options);
+}
+
+
+function addNoAddtionalProperties(schema: Schema) {
+    if (schema.type == 'object') {
+        schema.additionalProperties = false;
+        const keys = Object.keys(schema.properties);
+        schema.properties = keys.reduce((properties, key) => {
+            properties[key] = addNoAddtionalProperties(schema.properties[key]);
+            return properties;
+        }, schema.properties);
+    } else if (schema.type == 'array') {
+        schema.items = addNoAddtionalProperties(schema.items);
+    }
+    return schema;
 }
