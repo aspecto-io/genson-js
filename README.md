@@ -118,3 +118,23 @@ isSubset(
 ```
 <hr/>
 You can find more examples in the unit tests.
+
+### Options
+#### noAdditionalProperties 
+Add `additionalProperties=false` to all object types
+```ts
+import { createSchema } from 'genson-js';
+const schema = createSchema({ one: 1, two: 'second' }, { noAdditionalProperties: true });
+```
+The following schema will be created:
+```ts
+{
+    type: 'object',
+    additionalProperties: false,
+    properties: { one: { type: 'integer' }, two: { type: 'string' } },
+    required: [
+        "one",
+        "two",
+    ]
+}
+```

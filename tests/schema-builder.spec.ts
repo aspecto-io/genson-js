@@ -93,6 +93,18 @@ describe('SchemaBuilder', () => {
                     properties: { one: { type: 'integer' }, two: { type: 'string' } },
                 });
             });
+            it('it should generate schema for object with additionalProperties=false ', () => {
+                const schema = createSchema({ one: 1, two: 'second' }, { noAdditionalProperties: true });
+                expect(schema).toEqual({
+                    type: 'object',
+                    additionalProperties: false,
+                    properties: { one: { type: 'integer' }, two: { type: 'string' } },
+                    required: [
+                        "one",
+                        "two",
+                    ]
+                });
+            });
         });
 
         describe('nested array', () => {
@@ -238,6 +250,54 @@ describe('SchemaBuilder', () => {
                                 type: 'array',
                                 items: {
                                     type: 'object',
+                                    properties: {
+                                        prop1: {
+                                            type: 'string',
+                                        },
+                                        prop2: {
+                                            type: 'string',
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        required: ['arr'],
+                    },
+                });
+            });
+
+            it('should consider value with additionalProperties=false in all objects', async () => {
+                const val = [
+                    {
+                        arr: [
+                            {
+                                prop1: 'test string',
+                            },
+                            {
+                                prop2: 'test string',
+                            },
+                        ],
+                    },
+                    {
+                        arr: [
+                            {
+                                prop1: 'test',
+                            },
+                        ],
+                    },
+                ];
+                const schema = createSchema(val, { noAdditionalProperties: true });
+                expect(schema).toEqual({
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        additionalProperties: false,
+                        properties: {
+                            arr: {
+                                type: 'array',
+                                items: {
+                                    type: 'object',
+                                    additionalProperties: false,
                                     properties: {
                                         prop1: {
                                             type: 'string',
